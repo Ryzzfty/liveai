@@ -6,6 +6,7 @@
     <title>GREYH4CK | Social Studio</title>
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -15,7 +16,7 @@
             overflow: hidden;
             font-size: clamp(12px, 4vw, 15px);
         }
-        /* BACKGROUND TYPING ANIMATION */
+        /* BACKGROUND TYPING */
         .bg-terminal {
             position: fixed;
             top: 0;
@@ -34,9 +35,8 @@
             color: #7e8a9e;
             font-size: 12px;
             line-height: 1.7;
-            font-family: 'Fira Code', monospace;
         }
-        .bg-line { margin-bottom: 5px; opacity: 0.85; white-space: pre-wrap; word-break: break-word; }
+        .bg-line { margin-bottom: 5px; opacity: 0.85; }
         .bg-prompt { color: #aab4c8; display: inline-block; font-weight: bold; }
         .bg-cursor {
             display: inline-block;
@@ -48,7 +48,6 @@
             animation: bgBlink 1s step-end infinite;
         }
         @keyframes bgBlink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
-        
         .grid-overlay, .scanline {
             position: fixed;
             top: 0;
@@ -79,12 +78,9 @@
         @media (max-width: 768px) {
             .sidebar { width: 100%; max-height: 55px; flex-direction: row; overflow-x: auto; border-bottom: 1px solid rgba(70,76,100,0.3); }
             .profile-card { padding: 0.4rem 0.8rem; }
-            .profile-card .avatar { width: 38px; height: 38px; }
-            .search-box { display: none; }
             .menu { display: flex; flex-wrap: nowrap; overflow-x: auto; padding: 0.3rem 0; }
             .menu-item { white-space: nowrap; padding: 0.4rem 1rem; }
-            .online-users-section { display: none; }
-            .file-section { display: none; }
+            .file-section, .online-users-section { display: none; }
             .main { padding: 0.5rem; }
         }
         .profile-card {
@@ -137,7 +133,6 @@
         }
         .menu-item:hover { background: rgba(50,58,85,0.5); }
         .menu-item.active { background: rgba(60,68,100,0.5); color: white; border-left: 3px solid #5de4c7; }
-        /* ONLINE USERS SECTION */
         .online-users-section {
             padding: 0.8rem 0.5rem;
             border-bottom: 1px solid rgba(70,76,100,0.3);
@@ -158,20 +153,15 @@
             display: flex;
             align-items: center;
             gap: 0.6rem;
-            padding: 0.5rem 0.8rem;
+            padding: 0.4rem 0.8rem;
             cursor: pointer;
             border-radius: 10px;
             transition: 0.2s;
             color: #c8d0e5;
             font-size: 0.75rem;
         }
-        .online-user:hover {
-            background: rgba(93,228,199,0.2);
-        }
-        .online-user.active-chat {
-            background: rgba(93,228,199,0.3);
-            border-left: 3px solid #5de4c7;
-        }
+        .online-user:hover { background: rgba(93,228,199,0.2); }
+        .online-user.active-chat { background: rgba(93,228,199,0.3); border-left: 3px solid #5de4c7; }
         .online-status {
             width: 8px;
             height: 8px;
@@ -229,8 +219,7 @@
             color: #e5eaf5;
         }
         .card-content { flex: 1; padding: 1rem; overflow-y: auto; }
-        
-        /* CHAT PANEL */
+        /* Chat Panel */
         .chat-messages {
             flex: 1;
             overflow-y: auto;
@@ -244,7 +233,6 @@
             padding: 0.6rem 1rem;
             border-radius: 20px;
             font-size: 0.8rem;
-            position: relative;
         }
         .chat-mine {
             align-self: flex-end;
@@ -286,24 +274,8 @@
             padding: 0.7rem 1.5rem;
             cursor: pointer;
             font-weight: bold;
-            color: #0a0c12;
             transition: 0.2s;
         }
-        .btn-send:hover {
-            background: #4ac7b0;
-            transform: scale(0.98);
-        }
-        .connection-status {
-            padding: 0.5rem;
-            text-align: center;
-            font-size: 0.65rem;
-            background: rgba(18,22,35,0.5);
-            border-bottom: 1px solid rgba(70,76,100,0.3);
-        }
-        .status-connected { color: #5de4c7; }
-        .status-disconnected { color: #ff6666; }
-        
-        /* EDITOR 4 PANEL */
         .editor-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -323,15 +295,6 @@
             padding: 0.5rem 0.8rem;
             display: flex;
             justify-content: space-between;
-            font-size: 0.7rem;
-            border-radius: 12px 12px 0 0;
-        }
-        .editor-header .title { color: #5de4c7; }
-        .close-panel {
-            background: none;
-            border: none;
-            color: #ff8888;
-            cursor: pointer;
             font-size: 0.7rem;
         }
         .editor-textarea {
@@ -354,8 +317,6 @@
             font-size: 0.8rem;
             cursor: pointer;
         }
-        
-        /* POSTS */
         .post {
             background: rgba(18, 22, 35, 0.7);
             border: 1px solid rgba(70,76,100,0.3);
@@ -370,36 +331,20 @@
             margin-bottom: 0.8rem;
             cursor: pointer;
         }
-        .post-avatar {
-            width: 42px;
-            height: 42px;
-            background: rgba(30,35,55,0.9);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+        .post-avatar { width: 42px; height: 42px; background: rgba(30,35,55,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         .post-username { color: #e5eaf5; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
         .post-time { font-size: 0.65rem; color: #8a95aa; }
         .post-content { color: #c8d0e5; font-size: 0.85rem; margin: 0.5rem 0; line-height: 1.4; }
-        .post-media { margin: 0.5rem 0; text-align: center; }
-        .post-media img { max-width: 100%; max-height: 200px; border-radius: 12px; }
         .post-actions { display: flex; gap: 1.5rem; padding-top: 0.5rem; border-top: 1px solid rgba(70,76,100,0.3); }
         .post-like, .post-comment { color: #aab4c8; font-size: 0.8rem; cursor: pointer; }
         .post-like.liked { color: #ff7777; }
-        
-        /* NEW POST */
         .new-post {
             background: rgba(18, 22, 35, 0.7);
             border-radius: 16px;
             padding: 1rem;
             margin-bottom: 1rem;
         }
-        .post-type {
-            display: flex;
-            gap: 0.8rem;
-            margin-bottom: 0.8rem;
-        }
+        .post-type { display: flex; gap: 0.8rem; margin-bottom: 0.8rem; }
         .type-btn {
             background: rgba(30,35,55,0.8);
             border: 1px solid rgba(70,76,100,0.5);
@@ -408,7 +353,6 @@
             color: #c8d0e5;
             cursor: pointer;
             font-size: 0.75rem;
-            transition: 0.2s;
         }
         .type-btn.active { background: #5de4c7; color: #0a0c12; }
         .post-input {
@@ -441,14 +385,7 @@
             border-radius: 25px;
             padding: 0.5rem 1.5rem;
             cursor: pointer;
-            font-size: 0.8rem;
-            transition: 0.2s;
         }
-        .btn-post:hover {
-            background: #4ac7b0;
-        }
-        
-        /* RANKING */
         .rank-item {
             display: flex;
             align-items: center;
@@ -459,11 +396,9 @@
             margin-bottom: 0.8rem;
         }
         .rank-num { font-size: 1.4rem; width: 60px; }
-        .rank-name { color: #e5eaf5; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
+        .rank-name { color: #e5eaf5; font-weight: bold; cursor: pointer; }
         .rank-stats { font-size: 0.65rem; color: #8a95aa; }
-        .rank-score { color: #5de4c7; font-weight: bold; margin-left: auto; font-size: 0.9rem; }
-        
-        /* DRAWER */
+        .rank-score { color: #5de4c7; font-weight: bold; margin-left: auto; }
         .drawer {
             position: fixed;
             top: 0;
@@ -478,7 +413,7 @@
             padding: 2rem;
         }
         .drawer.open { right: 0; }
-        .drawer-header { display: flex; justify-content: space-between; color: #e5eaf5; margin-bottom: 1rem; font-size: 1rem; }
+        .drawer-header { display: flex; justify-content: space-between; color: #e5eaf5; margin-bottom: 1rem; }
         .drawer-close { background: none; border: none; color: #aab4c8; font-size: 1.8rem; cursor: pointer; }
         .avatar-large {
             width: 90px;
@@ -501,7 +436,6 @@
             color: #c8d0e5;
             outline: none;
             margin-bottom: 1rem;
-            font-size: 0.85rem;
         }
         .drawer-btn {
             background: rgba(30,35,55,0.9);
@@ -511,11 +445,6 @@
             color: #c8d0e5;
             cursor: pointer;
             width: 100%;
-            font-size: 0.85rem;
-            transition: 0.2s;
-        }
-        .drawer-btn:hover {
-            background: rgba(50,58,85,0.9);
         }
         .toast {
             position: fixed;
@@ -539,17 +468,12 @@
             font-size: 0.65rem;
             color: #aab4c8;
         }
-        
-        /* BUTTON STYLES (rounded) */
         button, .btn, .drawer-btn, .btn-post, .btn-send, .type-btn, .settings-icon {
             border-radius: 25px !important;
             cursor: pointer;
             transition: all 0.2s ease;
         }
-        button:hover, .btn:hover, .drawer-btn:hover, .btn-post:hover, .btn-send:hover, .type-btn:hover {
-            transform: translateY(-2px);
-        }
-        
+        button:hover { transform: translateY(-2px); }
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: rgba(8, 10, 18, 0.5); }
         ::-webkit-scrollbar-thumb { background: #5de4c7; border-radius: 5px; }
@@ -612,28 +536,35 @@
 
 <div id="toast" class="toast"></div>
 
-<script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
-
 <script>
-    // ========== INIT ==========
-    if (!sessionStorage.getItem('greySession')) window.location.href = 'login.html';
+    // ========== 🔴 SUPABASE CONFIG - GANTIKAN DENGAN DATA AWAK 🔴 ==========
+    const SUPABASE_URL = "https://kxahdvrxoohkqeeckbrn.supabase.co";
+    const SUPABASE_ANON_KEY = "https://kxahdvrxoohkqeecbkrn.supabase.co/rest/v1/";  // ← AWAK PERLU PASTE!
+    // ========================================================================
+    
+    let supabase = null;
+    let currentUser = null;
+    let currentChannel = null;
+    let onlineUsers = new Set();
+    let onlineInterval = null;
+    let currentChatUser = null;
+    let activeChatPanel = false;
+    
+    // ========== INITIAL DATA ==========
+    if (!sessionStorage.getItem('greySession')) {
+        // Create session if not exists (for demo)
+        sessionStorage.setItem('greySession', JSON.stringify({ username: "guest" + Math.floor(Math.random()*1000) }));
+    }
     
     const ADMIN = "grey";
     let blockedUsers = JSON.parse(localStorage.getItem('grey_blocked') || '[]');
     let globalPosts = JSON.parse(localStorage.getItem('grey_posts') || '[]');
     let users = [];
-    let currentUser = null;
     let panelFiles = [null, null, null, null];
     let currentPage = 'dashboard';
     let postType = 'text';
     let liveFormat = 'html';
     let notifications = [];
-    
-    // P2P Chat variables
-    let peer = null;
-    let activeConnections = {};
-    let currentChatUser = null;
-    let heartbeatInterval = null;
     
     function saveUsers() { localStorage.setItem('greyhack_users', JSON.stringify(users)); }
     function saveBlocked() { localStorage.setItem('grey_blocked', JSON.stringify(blockedUsers)); }
@@ -646,11 +577,10 @@
     const bgContainer = document.getElementById('bgContainer');
     const bgCmds = [
         "> connecting to secure server...",
-        "> peer-to-peer chat active",
+        "> supabase real-time active",
         "$ online users: click to chat",
         "> end-to-end encrypted",
-        "$ no server, direct connection",
-        "> type /help for commands"
+        "$ type /help for commands"
     ];
     let bgIdx = 0, bgCharIdx = 0, bgIsTyping = true;
     function typeBackground() {
@@ -674,143 +604,58 @@
     }
     setTimeout(typeBackground, 500);
     
-    // Update online status
+    // ========== SUPABASE FUNCTIONS ==========
+    function initSupabase() {
+        if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY === "https://kxahdvrxoohkqeecbkrn.supabase.co/rest/v1/") {
+            console.warn("Please configure SUPABASE_ANON_KEY");
+            return false;
+        }
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        return true;
+    }
+    
+    // Update online status in localStorage (simple presence)
     function updateOnlineStatus() {
         if (!currentUser) return;
         const status = {
             username: currentUser.username,
-            peerId: getPeerIdForUser(currentUser.username),
             timestamp: Date.now(),
             avatar: currentUser.workspace?.avatar || null
         };
-        localStorage.setItem(`p2p_online_${currentUser.username}`, JSON.stringify(status));
+        localStorage.setItem(`online_${currentUser.username}`, JSON.stringify(status));
         
+        // Clean old entries
         const now = Date.now();
-        Object.keys(localStorage).forEach(key => {
-            if (key.startsWith('p2p_online_')) {
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('online_') && key !== `online_${currentUser.username}`) {
                 try {
                     const data = JSON.parse(localStorage.getItem(key));
                     if (now - data.timestamp > 10000) localStorage.removeItem(key);
                 } catch(e) {}
             }
-        });
+        }
+        renderOnlineUsers();
     }
     
     function getOnlineUsers() {
         const online = [];
         const now = Date.now();
-        Object.keys(localStorage).forEach(key => {
-            if (key.startsWith('p2p_online_') && !key.includes(currentUser?.username)) {
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('online_') && !key.includes(currentUser?.username)) {
                 try {
                     const data = JSON.parse(localStorage.getItem(key));
                     if (now - data.timestamp < 10000) {
-                        online.push({ username: key.replace('p2p_online_', ''), peerId: data.peerId, avatar: data.avatar });
+                        online.push({ username: key.replace('online_', ''), avatar: data.avatar });
                     } else {
                         localStorage.removeItem(key);
                     }
                 } catch(e) {}
             }
-        });
+        }
         return online;
     }
-    
-    function getPeerIdForUser(username) {
-        let peerId = localStorage.getItem(`p2p_id_${username}`);
-        if (!peerId) {
-            peerId = `${username}_${Math.random().toString(36).substring(2, 8)}${Date.now()}`;
-            localStorage.setItem(`p2p_id_${username}`, peerId);
-        }
-        return peerId;
-    }
-    
-    function connectToUser(username, peerId) {
-        if (activeConnections[username]) {
-            showToast(`Already connected to ${username}`);
-            openChatPanel(username);
-            return;
-        }
-        
-        if (!peer) { showToast("Please wait, connecting..."); return; }
-        
-        const conn = peer.connect(peerId);
-        
-        conn.on('open', () => {
-            activeConnections[username] = conn;
-            showToast(`Connected to ${username}!`);
-            openChatPanel(username);
-            conn.send({ type: 'status', status: 'online' });
-        });
-        
-        conn.on('data', (data) => {
-            if (data.type === 'chat') {
-                receiveChatMessage(username, data.message, data.time);
-            }
-        });
-        
-        conn.on('close', () => {
-            delete activeConnections[username];
-            if (currentChatUser === username) closeChatPanel();
-            showToast(`${username} disconnected`);
-        });
-        
-        conn.on('error', (err) => { console.error(err); delete activeConnections[username]; });
-    }
-    
-    function sendChatMessage() {
-        const input = document.getElementById('chatInput');
-        const msg = input?.value.trim();
-        if (!msg || !currentChatUser) return;
-        
-        const conn = activeConnections[currentChatUser];
-        if (!conn) { showToast(`Not connected to ${currentChatUser}`); return; }
-        
-        conn.send({ type: 'chat', message: msg, time: new Date().toLocaleTimeString() });
-        addChatMessageToUI(msg, true);
-        input.value = '';
-    }
-    
-    function receiveChatMessage(username, message, time) {
-        if (currentChatUser === username) {
-            addChatMessageToUI(message, false, time);
-        } else {
-            showToast(`New message from ${username}`);
-        }
-    }
-    
-    function addChatMessageToUI(message, isMine, time = null) {
-        const container = document.getElementById('chatMessages');
-        if (!container) return;
-        const div = document.createElement('div');
-        div.className = `chat-bubble ${isMine ? 'chat-mine' : 'chat-other'}`;
-        div.innerHTML = `<div>${escapeHtml(message)}</div><div class="chat-time">${time || new Date().toLocaleTimeString()}</div>`;
-        container.appendChild(div);
-        container.scrollTop = container.scrollHeight;
-    }
-    
-    function openChatPanel(username) {
-        currentChatUser = username;
-        const main = document.getElementById('mainContent');
-        main.innerHTML = `
-            <div class="card">
-                <div class="card-header">
-                    <i class="fas fa-comments"></i> Chat with ${username}
-                    <button class="btn-send" style="padding:0.3rem 0.8rem;" onclick="closeChatPanel()">← Back</button>
-                </div>
-                <div class="connection-status">
-                    <span class="status-connected">✅ Connected to ${username}</span>
-                </div>
-                <div class="chat-messages" id="chatMessages" style="flex:1; overflow-y:auto; padding:1rem; display:flex; flex-direction:column; gap:0.5rem;">
-                    <div style="text-align:center;color:#8a95aa;">Start chatting with ${username}</div>
-                </div>
-                <div class="chat-input-area">
-                    <input type="text" id="chatInput" class="chat-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendChatMessage()">
-                    <button class="btn-send" onclick="sendChatMessage()">Send</button>
-                </div>
-            </div>
-        `;
-    }
-    
-    function closeChatPanel() { currentChatUser = null; setPage(currentPage); }
     
     function renderOnlineUsers() {
         const online = getOnlineUsers();
@@ -822,7 +667,7 @@
             return;
         }
         container.innerHTML = online.map(user => `
-            <div class="online-user ${currentChatUser === user.username ? 'active-chat' : ''}" onclick="connectToUser('${user.username}', '${user.peerId}')">
+            <div class="online-user ${currentChatUser === user.username ? 'active-chat' : ''}" onclick="openChatWith('${user.username}')">
                 <span class="online-status"></span>
                 <span style="flex:1;">${user.username} ${user.username === ADMIN ? '👑' : ''}</span>
                 <i class="fas fa-comment" style="font-size:0.6rem;opacity:0.6;"></i>
@@ -830,28 +675,124 @@
         `).join('');
     }
     
-    function initP2P() {
-        if (!currentUser) return;
-        const myPeerId = getPeerIdForUser(currentUser.username);
-        peer = new Peer(myPeerId, {
-            host: '0.peerjs.com',
-            port: 443,
-            path: '/',
-            secure: true,
-            debug: 0
-        });
-        peer.on('open', () => { updateOnlineStatus(); heartbeatInterval = setInterval(updateOnlineStatus, 3000); });
-        peer.on('connection', (conn) => {
-            const username = conn.peer.split('_')[0];
-            activeConnections[username] = conn;
-            conn.on('data', (data) => { if (data.type === 'chat') receiveChatMessage(username, data.message, data.time); });
-            conn.on('close', () => { delete activeConnections[username]; });
-        });
-        peer.on('error', (err) => { console.warn(err); });
+    // ========== CHAT FUNCTIONS ==========
+    async function loadChatMessages() {
+        if (!supabase || !currentUser) return;
+        const { data, error } = await supabase
+            .from('chat_messages')
+            .select('*')
+            .order('created_at', { ascending: true })
+            .limit(200);
+        
+        if (error) {
+            console.error('Error loading messages:', error);
+            if (error.message.includes('relation') || error.code === '42P01') {
+                showToast('⚠️ Table "chat_messages" not found. Please create it in Supabase!');
+            }
+            return;
+        }
+        
+        if (data && data.length > 0) {
+            const container = document.getElementById('chatMessages');
+            if (container) {
+                container.innerHTML = '';
+                data.forEach(msg => {
+                    addChatMessageToUI(msg.username, msg.message, msg.username === currentUser.username);
+                });
+            }
+        }
     }
     
-    setInterval(renderOnlineUsers, 2000);
+    function addChatMessageToUI(username, message, isMine) {
+        const container = document.getElementById('chatMessages');
+        if (!container) return;
+        const div = document.createElement('div');
+        div.className = `chat-bubble ${isMine ? 'chat-mine' : 'chat-other'}`;
+        div.innerHTML = `
+            <div style="font-weight:bold; font-size:0.7rem; margin-bottom:3px;">${isMine ? 'You' : username}</div>
+            <div>${escapeHtml(message)}</div>
+            <div class="chat-time">${new Date().toLocaleTimeString()}</div>
+        `;
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
+    }
     
+    async function sendSupabaseMessage() {
+        const input = document.getElementById('chatInput');
+        const message = input?.value.trim();
+        if (!message || !currentUser || !supabase) return;
+        
+        const { error } = await supabase
+            .from('chat_messages')
+            .insert([{ username: currentUser.username, message: message }]);
+        
+        if (error) {
+            console.error('Error sending:', error);
+            showToast('Failed to send message');
+        } else {
+            input.value = '';
+        }
+    }
+    
+    async function setupRealtimeSubscription() {
+        if (!supabase || !currentUser) return;
+        
+        if (currentChannel) {
+            await supabase.removeChannel(currentChannel);
+        }
+        
+        currentChannel = supabase.channel('public:chat_messages')
+            .on('postgres_changes', { 
+                event: 'INSERT', 
+                schema: 'public', 
+                table: 'chat_messages' 
+            }, (payload) => {
+                const newMsg = payload.new;
+                if (newMsg.username !== currentUser.username && activeChatPanel) {
+                    addChatMessageToUI(newMsg.username, newMsg.message, false);
+                    showToast(`New message from ${newMsg.username}`);
+                } else if (newMsg.username !== currentUser.username) {
+                    showToast(`📩 New message from ${newMsg.username}`);
+                }
+            })
+            .subscribe();
+    }
+    
+    function openChatWith(username) {
+        currentChatUser = username;
+        activeChatPanel = true;
+        renderChatPanel();
+        loadChatMessages();
+        setupRealtimeSubscription();
+    }
+    
+    function renderChatPanel() {
+        const main = document.getElementById('mainContent');
+        main.innerHTML = `
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-comments"></i> Global Chat
+                    <button class="btn-send" style="padding:0.3rem 0.8rem;" onclick="closeChatPanel()">← Back</button>
+                </div>
+                <div class="chat-messages" id="chatMessages" style="flex:1; overflow-y:auto; padding:1rem; display:flex; flex-direction:column; gap:0.5rem;">
+                    <div style="text-align:center;color:#8a95aa;">Loading messages...</div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="chatInput" class="chat-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendSupabaseMessage()">
+                    <button class="btn-send" onclick="sendSupabaseMessage()">Send</button>
+                </div>
+                <div class="status-bar">✅ Connected to Supabase • Real-time active</div>
+            </div>
+        `;
+    }
+    
+    function closeChatPanel() {
+        activeChatPanel = false;
+        currentChatUser = null;
+        setPage(currentPage);
+    }
+    
+    // ========== USER DATA ==========
     function loadUsers() {
         const stored = localStorage.getItem('greyhack_users');
         if (stored) users = JSON.parse(stored);
@@ -867,6 +808,12 @@
             const { username } = JSON.parse(session);
             if (blockedUsers.includes(username)) { sessionStorage.removeItem('greySession'); window.location.href = 'login.html'; return; }
             currentUser = users.find(u => u.username === username);
+            if (!currentUser) {
+                // Create new user
+                currentUser = { username: username, password: "temp", email: username + "@grey.com", bio: "New member", followers: 0, following: [], workspace: { files: {}, panelFiles: [null, null, null, null], avatar: null } };
+                users.push(currentUser);
+                saveUsers();
+            }
             if (currentUser && !currentUser.workspace) currentUser.workspace = { files: {}, panelFiles: [null, null, null, null], avatar: null };
             if (currentUser && !currentUser.workspace.files) currentUser.workspace.files = {};
             if (currentUser && !currentUser.following) currentUser.following = [];
@@ -881,7 +828,12 @@
     }
     
     loadUsers();
-    if (!currentUser) { sessionStorage.removeItem('greySession'); window.location.href = 'login.html'; }
+    if (!currentUser) {
+        // Create a default user for demo
+        currentUser = { username: "grey", password: "grey123", email: "god@greyh4ck.com", bio: "👑 THE GOD OF H4CKERS", followers: 301500, following: [], workspace: { files: {}, panelFiles: [null, null, null, null], avatar: null } };
+        users.push(currentUser);
+        saveUsers();
+    }
     const isAdmin = (currentUser.username === ADMIN);
     if (isAdmin) document.getElementById('adminMenu').style.display = 'flex';
     if (currentUser.workspace.panelFiles) panelFiles = currentUser.workspace.panelFiles;
@@ -890,6 +842,13 @@
         savePosts();
     }
     
+    // Start online status and Supabase
+    initSupabase();
+    updateOnlineStatus();
+    onlineInterval = setInterval(updateOnlineStatus, 3000);
+    setInterval(renderOnlineUsers, 2000);
+    
+    // ========== FILE FUNCTIONS ==========
     function renderFileList() {
         const container = document.getElementById('fileList');
         if (!container) return;
@@ -924,7 +883,7 @@
     function postThread() {
         const content = document.getElementById('newPostContent')?.value.trim();
         if (!content) { showToast("Cannot post empty!"); return; }
-        globalPosts.unshift({ id: Date.now(), username: currentUser.username, type: postType, content: content, time: new Date().toLocaleString(), likes: [], comments: [] });
+        globalPosts.unshift({ id: Date.now(), username: currentUser.username, type: postType, content: content, time: new Date().toLocaleString(), likes: [], comments: [], media: null });
         savePosts();
         document.getElementById('newPostContent').value = '';
         renderThreads();
@@ -973,6 +932,7 @@
     
     function setPage(page) {
         currentPage = page;
+        activeChatPanel = false;
         if (page === 'dashboard') renderDashboard();
         else if (page === 'threads') renderThreads();
         else if (page === 'ranking') renderRanking();
@@ -994,6 +954,7 @@
         document.getElementById('drawerBio').value = currentUser.bio || '';
     }
     
+    // Event listeners
     document.querySelectorAll('.menu-item').forEach(m => m.addEventListener('click', () => setPage(m.dataset.page)));
     document.getElementById('newFileBtn').onclick = () => createNewFile();
     const drawer = document.getElementById('drawer');
@@ -1022,19 +983,23 @@
         }
     };
     
-    window.connectToUser = connectToUser;
-    window.sendChatMessage = sendChatMessage;
-    window.closeChatPanel = closeChatPanel;
+    // Expose global functions
     window.openProfile = openProfile;
     window.postThread = postThread;
     window.likePost = likePost;
     window.commentPost = commentPost;
+    window.openChatWith = openChatWith;
+    window.sendSupabaseMessage = sendSupabaseMessage;
+    window.closeChatPanel = closeChatPanel;
     
     updateSidebar();
     renderFileList();
     setPage('dashboard');
-    initP2P();
-    renderOnlineUsers();
+    
+    // Initial presence
+    if (initSupabase()) {
+        setupRealtimeSubscription();
+    }
 </script>
 </body>
 </html>
