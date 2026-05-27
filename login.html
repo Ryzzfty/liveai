@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GREYH4CK | Terminal Access</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #0a0c0f;
+            font-family: 'Share Tech Mono', 'Fira Code', monospace;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* ========== BACKGROUND TYPING EFFECT SEPERTI TERMINAL ========== */
+        .terminal-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            background: #05070a;
+            font-family: 'Fira Code', monospace;
+            overflow: hidden;
+            padding: 20px;
+        }
+
+        .terminal-bg-content {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            font-family: 'Fira Code', monospace;
+            color: #6a7388;
+            font-size: 12px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 80%;
+            overflow-y: hidden;
+            text-shadow: 0 0 1px rgba(100, 110, 130, 0.3);
+        }
+
+        .terminal-bg-line {
+            margin-bottom: 2px;
+            opacity: 0.7;
+        }
+
+        .terminal-bg-prompt {
+            color: #8a95aa;
+            display: inline-block;
+        }
+
+        .terminal-bg-command {
+            display: inline-block;
+        }
+
+        .terminal-bg-cursor {
+            display: inline-block;
+            width: 7px;
+            height: 13px;
+            background-color: #7a8297;
+            vertical-align: middle;
+            margin-left: 2px;
+            animation: bgBlink 1s step-end infinite;
+        }
+
+        @keyframes bgBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Grid overlay halus */
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(80, 90, 100, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(80, 90, 100, 0.04) 1px, transparent 1px);
+            background-size: 35px 35px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Scanline effect */
+        .scanline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.1) 0px,
+                rgba(0, 0, 0, 0.1) 2px,
+                transparent 2px,
+                transparent 8px
+            );
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* TERMINAL CARD (LOGIN FORM) */
+        .terminal-card {
+            position: relative;
+            z-index: 10;
+            width: 500px;
+            max-width: 100%;
+            background: rgba(8, 10, 14, 0.92);
+            backdrop-filter: blur(4px);
+            border: 1px solid #3a3f4b;
+            border-radius: 16px;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(90, 100, 115, 0.2);
+            overflow: hidden;
+        }
+
+        .terminal-bar {
+            background: #0e1117;
+            padding: 0.8rem 1.2rem;
+            border-bottom: 1px solid #262c36;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .terminal-dots {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #3e3e4a;
+        }
+        .dot.red { background: #5a5f6e; }
+        .dot.yellow { background: #6a6f7e; }
+        .dot.green { background: #7a7f8e; }
+
+        .terminal-title {
+            color: #8f99ae;
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            margin-left: 0.5rem;
+            font-family: monospace;
+        }
+
+        .terminal-body {
+            padding: 2rem 2rem 2.2rem;
+        }
+
+        .glitch-text {
+            font-size: 0.9rem;
+            color: #b4bccd;
+            letter-spacing: 1px;
+            font-family: 'Share Tech Mono', monospace;
+            border-left: 3px solid #6e7b8c;
+            padding-left: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .cursor-blink {
+            display: inline-block;
+            width: 8px;
+            height: 14px;
+            background-color: #8e9aaf;
+            vertical-align: middle;
+            margin-left: 4px;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-label {
+            display: block;
+            color: #a4aec5;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 0.5rem;
+            font-family: monospace;
+        }
+
+        .input-field {
+            width: 100%;
+            background: #04060a;
+            border: 1px solid #2c313e;
+            border-radius: 8px;
+            padding: 0.85rem 1rem;
+            color: #cfd9e6;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        .input-field:focus {
+            border-color: #8a95aa;
+            box-shadow: 0 0 0 2px rgba(100, 110, 130, 0.3);
+            background: #0b0f15;
+        }
+
+        .btn-login {
+            width: 100%;
+            background: #151a22;
+            border: 1px solid #4a5060;
+            border-radius: 8px;
+            padding: 0.9rem;
+            color: #cbd5e6;
+            font-family: 'Share Tech Mono', monospace;
+            font-weight: 600;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        .btn-login:hover {
+            background: #202732;
+            border-color: #8a95ae;
+            color: #f0f4ff;
+            box-shadow: 0 0 8px rgba(100, 110, 130, 0.4);
+        }
+
+        .switch-auth {
+            text-align: center;
+            margin-top: 1.2rem;
+            font-size: 0.7rem;
+            color: #7a8297;
+            font-family: monospace;
+        }
+
+        .switch-auth a {
+            color: #9fa9c2;
+            text-decoration: none;
+            border-bottom: 1px dashed #5a6175;
+            cursor: pointer;
+        }
+
+        .error-msg {
+            color: #bf8f8f;
+            font-size: 0.7rem;
+            margin-top: 0.5rem;
+            text-align: center;
+            font-family: monospace;
+        }
+
+        .users-list {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #242933;
+        }
+
+        .users-title {
+            font-size: 0.6rem;
+            color: #6b738a;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.6rem;
+        }
+
+        .user-badge {
+            background: #11151e;
+            border: 1px solid #2f3543;
+            border-radius: 20px;
+            padding: 0.2rem 0.7rem;
+            font-size: 0.65rem;
+            color: #9aa6c0;
+            display: inline-block;
+            margin: 0.2rem;
+            font-family: monospace;
+        }
+
+        .footer-line {
+            margin-top: 1.5rem;
+            text-align: center;
+            font-size: 0.55rem;
+            color: #454f66;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- BACKGROUND TYPING EFFECT SEPERTI TERMINAL -->
+<div class="terminal-bg">
+    <div class="terminal-bg-content" id="typingBackground"></div>
+</div>
+<div class="grid-overlay"></div>
+<div class="scanline"></div>
+
+<!-- LOGIN CARD -->
+<div class="terminal-card">
+    <div class="terminal-bar">
+        <div class="terminal-dots">
+            <div class="dot red"></div>
+            <div class="dot yellow"></div>
+            <div class="dot green"></div>
+        </div>
+        <div class="terminal-title">
+            <i class="fas fa-terminal"></i> greyh4ck@secure:~/
+        </div>
+    </div>
+
+    <div class="terminal-body">
+        <div class="glitch-text">
+            > ACCESS_SECURE_SYSTEM<span class="cursor-blink"></span>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <div id="loginSection">
+            <div class="input-group">
+                <label class="input-label"><i class="fas fa-user"></i> USERNAME</label>
+                <input type="text" id="loginUsername" class="input-field" placeholder="grey_agent" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <label class="input-label"><i class="fas fa-lock"></i> PASSWORD</label>
+                <input type="password" id="loginPassword" class="input-field" placeholder="··········">
+            </div>
+            <div id="loginError" class="error-msg"></div>
+            <button id="doLoginBtn" class="btn-login"><i class="fas fa-arrow-right"></i> AUTHENTICATE</button>
+        </div>
+
+        <!-- REGISTER FORM -->
+        <div id="registerSection" style="display: none;">
+            <div class="input-group">
+                <label class="input-label"><i class="fas fa-user"></i> USERNAME</label>
+                <input type="text" id="regUsername" class="input-field" placeholder="new_agent">
+            </div>
+            <div class="input-group">
+                <label class="input-label"><i class="fas fa-lock"></i> PASSWORD</label>
+                <input type="password" id="regPassword" class="input-field" placeholder="min 3 chars">
+            </div>
+            <div class="input-group">
+                <label class="input-label"><i class="fas fa-check"></i> CONFIRM</label>
+                <input type="password" id="regConfirm" class="input-field" placeholder="repeat password">
+            </div>
+            <div id="regError" class="error-msg"></div>
+            <button id="doRegisterBtn" class="btn-login"><i class="fas fa-plus-circle"></i> CREATE ACCOUNT</button>
+        </div>
+
+        <div class="switch-auth">
+            <span id="switchMsg">belum ada akses? </span><a id="toggleAuthLink">daftar sekarang</a>
+        </div>
+
+        <div class="users-list">
+            <div class="users-title"><i class="fas fa-database"></i> REGISTERED_AGENTS</div>
+            <div id="userListBadges"></div>
+        </div>
+
+        <div class="footer-line">
+            [ GREYH4CK v4.0 | typing_animation_active ]
+        </div>
+    </div>
+</div>
+
+<script>
+    // ========== BACKGROUND TYPING EFFECT (BERHENTI SEKEJAP, TYPE BALIK) ==========
+    const commands = [
+        { cmd: "ssh grey@10.0.0.45", output: "Welcome grey, last login: Today 14:32:01" },
+        { cmd: "ls -la /var/log/", output: "total 128\ndrwxr-xr-x 2 root root 4096\n-rw-r--r-- 1 root root 8234 auth.log" },
+        { cmd: "cat /etc/hosts", output: "127.0.0.1 localhost\n192.168.1.10 gateway.internal" },
+        { cmd: "nmap -sV 192.168.1.1", output: "22/tcp open ssh\n80/tcp open http\n443/tcp open https" },
+        { cmd: "ping -c 4 google.com", output: "64 bytes from 142.250.185.46: time=12ms\n4 packets transmitted, 4 received" },
+        { cmd: "curl -I https://api.grey/sec", output: "HTTP/2 200 OK\nserver: grey-nginx\nx-auth: valid" },
+        { cmd: "grep -r 'admin' /etc/", output: "/etc/passwd:admin:x:1000:1000\n/etc/group:admin:x:1000" },
+        { cmd: "systemctl status firewall", output: "● firewall.service - active (running)\nLoaded: loaded (/etc/systemd/system)" },
+        { cmd: "python3 exploit.py --scan", output: "[+] Scanning ports 1-1024\n[+] 3 ports open\n[+] Generating report..." },
+        { cmd: "netstat -tulpn | grep LISTEN", output: "tcp 0 0 0.0.0.0:22 LISTEN\nudp 0 0 0.0.0.0:53 LISTEN" },
+        { cmd: "tail -f access.log", output: "192.168.1.100 - - [28/May/2026:10:22:34] \"GET /api\" 200" },
+        { cmd: "openssl enc -aes-256-cbc -d -in secret.bin", output: "Decryption successful. Output: flag{gr3y_h4ck_2026}" }
+    ];
+
+    let currentCommandIndex = 0;
+    let currentCharIndex = 0;
+    let currentOutputIndex = 0;
+    let isTypingCommand = true;
+    let isWaiting = false;
+    let isShowingOutput = false;
+    let outputLines = [];
+    
+    const bgContainer = document.getElementById('typingBackground');
+    
+    function addLineToBackground(text, isPrompt = true) {
+        const lineDiv = document.createElement('div');
+        lineDiv.className = 'terminal-bg-line';
+        
+        if(isPrompt) {
+            const promptSpan = document.createElement('span');
+            promptSpan.className = 'terminal-bg-prompt';
+            promptSpan.textContent = 'grey@hack:~$ ';
+            const cmdSpan = document.createElement('span');
+            cmdSpan.className = 'terminal-bg-command';
+            cmdSpan.textContent = text;
+            lineDiv.appendChild(promptSpan);
+            lineDiv.appendChild(cmdSpan);
+        } else {
+            lineDiv.textContent = text;
+            lineDiv.style.opacity = '0.6';
+            lineDiv.style.marginLeft = '20px';
+        }
+        
+        bgContainer.appendChild(lineDiv);
+        
+        // Auto scroll to bottom
+        bgContainer.scrollTop = bgContainer.scrollHeight;
+        
+        // Keep only last 30 lines
+        while(bgContainer.children.length > 35) {
+            bgContainer.removeChild(bgContainer.children[0]);
+        }
+        
+        return lineDiv;
+    }
+    
+    function typeNextCharacter() {
+        if(isWaiting) return;
+        
+        if(isTypingCommand) {
+            const currentCmd = commands[currentCommandIndex].cmd;
+            
+            if(currentCharIndex < currentCmd.length) {
+                // Type next character
+                const lineDiv = addLineToBackground(currentCmd.substring(0, currentCharIndex + 1), true);
+                // Remove previous partial line if exists
+                if(bgContainer.children.length > 1 && bgContainer.children[bgContainer.children.length - 2] && 
+                   bgContainer.children[bgContainer.children.length - 2].textContent.includes('grey@hack:~$')) {
+                    bgContainer.removeChild(bgContainer.children[bgContainer.children.length - 2]);
+                }
+                currentCharIndex++;
+                setTimeout(typeNextCharacter, 60 + Math.random() * 40); // typing speed
+            } else {
+                // Command finished typing, now show output
+                isTypingCommand = false;
+                const output = commands[currentCommandIndex].output;
+                outputLines = output.split('\n');
+                currentOutputIndex = 0;
+                isShowingOutput = true;
+                
+                // Short pause before showing output
+                setTimeout(() => typeNextCharacter(), 300);
+            }
+        } 
+        else if(isShowingOutput) {
+            if(currentOutputIndex < outputLines.length) {
+                addLineToBackground(outputLines[currentOutputIndex], false);
+                currentOutputIndex++;
+                setTimeout(typeNextCharacter, 100 + Math.random() * 50);
+            } else {
+                // Output finished, now wait (berhenti sekejap)
+                isShowingOutput = false;
+                isWaiting = true;
+                
+                // Add blank line
+                addLineToBackground('', false);
+                
+                // Wait 2-4 seconds before next command
+                const pauseDuration = 2500 + Math.random() * 2000;
+                setTimeout(() => {
+                    // Move to next command
+                    currentCommandIndex = (currentCommandIndex + 1) % commands.length;
+                    currentCharIndex = 0;
+                    isTypingCommand = true;
+                    isWaiting = false;
+                    typeNextCharacter();
+                }, pauseDuration);
+            }
+        }
+    }
+    
+    // Add initial prompt with cursor
+    function initBackground() {
+        const initialPrompt = document.createElement('div');
+        initialPrompt.className = 'terminal-bg-line';
+        const promptSpan = document.createElement('span');
+        promptSpan.className = 'terminal-bg-prompt';
+        promptSpan.textContent = 'grey@hack:~$ ';
+        const cursorSpan = document.createElement('span');
+        cursorSpan.className = 'terminal-bg-cursor';
+        initialPrompt.appendChild(promptSpan);
+        initialPrompt.appendChild(cursorSpan);
+        bgContainer.appendChild(initialPrompt);
+        
+        // Start typing after 1 second
+        setTimeout(() => {
+            // Remove initial cursor line
+            if(bgContainer.children[0]) {
+                bgContainer.removeChild(bgContainer.children[0]);
+            }
+            typeNextCharacter();
+        }, 1000);
+    }
+    
+    initBackground();
+    
+    // ========== MULTI-USER SYSTEM ==========
+    let usersDatabase = [];
+
+    function loadUsers() {
+        const stored = localStorage.getItem('greyhack_users');
+        if(stored) {
+            usersDatabase = JSON.parse(stored);
+        } else {
+            usersDatabase = [
+                { username: "grey", password: "grey123", workspace: {} },
+                { username: "nexus", password: "nexus99", workspace: {} },
+                { username: "zero", password: "zero123", workspace: {} }
+            ];
+            saveUsers();
+        }
+        updateUserList();
+    }
+
+    function saveUsers() {
+        localStorage.setItem('greyhack_users', JSON.stringify(usersDatabase));
+        updateUserList();
+    }
+
+    function findUser(username) {
+        return usersDatabase.find(u => u.username.toLowerCase() === username.toLowerCase());
+    }
+
+    function registerUser(username, password) {
+        if(findUser(username)) return { success: false, message: "! username already exists" };
+        if(password.length < 3) return { success: false, message: "! password too short (min 3)" };
+        usersDatabase.push({ username: username, password: password, workspace: {} });
+        saveUsers();
+        return { success: true, message: "account created. please login." };
+    }
+
+    function loginUser(username, password) {
+        const user = findUser(username);
+        if(user && user.password === password) {
+            sessionStorage.setItem('greySession', JSON.stringify({ username: user.username }));
+            return { success: true };
+        }
+        return { success: false, message: "! invalid credentials" };
+    }
+
+    function updateUserList() {
+        const container = document.getElementById('userListBadges');
+        if(container) {
+            container.innerHTML = usersDatabase.map(u => `<span class="user-badge"><i class="fas fa-user-secret"></i> ${u.username}</span>`).join('');
+        }
+    }
+
+    // UI toggling
+    let isLoginMode = true;
+    const loginSection = document.getElementById('loginSection');
+    const registerSection = document.getElementById('registerSection');
+    const switchMsg = document.getElementById('switchMsg');
+    const toggleLink = document.getElementById('toggleAuthLink');
+
+    function toggleAuthMode() {
+        isLoginMode = !isLoginMode;
+        if(isLoginMode) {
+            loginSection.style.display = 'block';
+            registerSection.style.display = 'none';
+            switchMsg.innerText = 'belum ada akses? ';
+            toggleLink.innerText = 'daftar sekarang';
+            document.getElementById('loginError').innerText = '';
+        } else {
+            loginSection.style.display = 'none';
+            registerSection.style.display = 'block';
+            switchMsg.innerText = 'sudah ada akaun? ';
+            toggleLink.innerText = 'login masuk';
+            document.getElementById('regError').innerText = '';
+        }
+    }
+
+    toggleLink.addEventListener('click', toggleAuthMode);
+
+    document.getElementById('doLoginBtn').addEventListener('click', () => {
+        const user = document.getElementById('loginUsername').value.trim();
+        const pass = document.getElementById('loginPassword').value;
+        const result = loginUser(user, pass);
+        if(result.success) {
+            window.location.href = 'dashboard.html';
+        } else {
+            document.getElementById('loginError').innerText = result.message;
+        }
+    });
+
+    document.getElementById('doRegisterBtn').addEventListener('click', () => {
+        const user = document.getElementById('regUsername').value.trim();
+        const pass = document.getElementById('regPassword').value;
+        const confirm = document.getElementById('regConfirm').value;
+        if(pass !== confirm) {
+            document.getElementById('regError').innerText = "! password confirmation mismatch";
+            return;
+        }
+        const result = registerUser(user, pass);
+        if(result.success) {
+            alert(result.message);
+            toggleAuthMode();
+            document.getElementById('loginUsername').value = user;
+            document.getElementById('loginPassword').value = pass;
+        } else {
+            document.getElementById('regError').innerText = result.message;
+        }
+    });
+
+    if(sessionStorage.getItem('greySession')) {
+        window.location.href = 'dashboard.html';
+    }
+
+    loadUsers();
+</script>
+</body>
+</html>
