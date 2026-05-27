@@ -15,6 +15,7 @@
             overflow: hidden;
             font-size: clamp(12px, 4vw, 15px);
         }
+        /* BACKGROUND TYPING ANIMATION */
         .bg-terminal {
             position: fixed;
             top: 0;
@@ -33,8 +34,9 @@
             color: #7e8a9e;
             font-size: 12px;
             line-height: 1.7;
+            font-family: 'Fira Code', monospace;
         }
-        .bg-line { margin-bottom: 5px; opacity: 0.85; }
+        .bg-line { margin-bottom: 5px; opacity: 0.85; white-space: pre-wrap; word-break: break-word; }
         .bg-prompt { color: #aab4c8; display: inline-block; font-weight: bold; }
         .bg-cursor {
             display: inline-block;
@@ -46,6 +48,7 @@
             animation: bgBlink 1s step-end infinite;
         }
         @keyframes bgBlink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+        
         .grid-overlay, .scanline {
             position: fixed;
             top: 0;
@@ -76,9 +79,12 @@
         @media (max-width: 768px) {
             .sidebar { width: 100%; max-height: 55px; flex-direction: row; overflow-x: auto; border-bottom: 1px solid rgba(70,76,100,0.3); }
             .profile-card { padding: 0.4rem 0.8rem; }
+            .profile-card .avatar { width: 38px; height: 38px; }
+            .search-box { display: none; }
             .menu { display: flex; flex-wrap: nowrap; overflow-x: auto; padding: 0.3rem 0; }
             .menu-item { white-space: nowrap; padding: 0.4rem 1rem; }
             .online-users-section { display: none; }
+            .file-section { display: none; }
             .main { padding: 0.5rem; }
         }
         .profile-card {
@@ -127,21 +133,13 @@
             cursor: pointer;
             font-size: 0.9rem;
             position: relative;
+            transition: 0.2s;
         }
         .menu-item:hover { background: rgba(50,58,85,0.5); }
         .menu-item.active { background: rgba(60,68,100,0.5); color: white; border-left: 3px solid #5de4c7; }
-        .notif-badge {
-            position: absolute;
-            right: 1rem;
-            background: #ff6666;
-            color: white;
-            border-radius: 50%;
-            padding: 0.15rem 0.5rem;
-            font-size: 0.7rem;
-        }
-        /* Online Users Section */
+        /* ONLINE USERS SECTION */
         .online-users-section {
-            padding: 0.5rem;
+            padding: 0.8rem 0.5rem;
             border-bottom: 1px solid rgba(70,76,100,0.3);
         }
         .section-title {
@@ -153,16 +151,16 @@
             gap: 0.5rem;
         }
         .online-user-list {
-            max-height: 150px;
+            max-height: 180px;
             overflow-y: auto;
         }
         .online-user {
             display: flex;
             align-items: center;
             gap: 0.6rem;
-            padding: 0.4rem 0.8rem;
+            padding: 0.5rem 0.8rem;
             cursor: pointer;
-            border-radius: 8px;
+            border-radius: 10px;
             transition: 0.2s;
             color: #c8d0e5;
             font-size: 0.75rem;
@@ -231,19 +229,20 @@
             color: #e5eaf5;
         }
         .card-content { flex: 1; padding: 1rem; overflow-y: auto; }
-        /* Chat Panel */
+        
+        /* CHAT PANEL */
         .chat-messages {
             flex: 1;
             overflow-y: auto;
-            padding: 0.8rem;
+            padding: 1rem;
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 0.8rem;
         }
         .chat-bubble {
             max-width: 75%;
-            padding: 0.5rem 1rem;
-            border-radius: 18px;
+            padding: 0.6rem 1rem;
+            border-radius: 20px;
             font-size: 0.8rem;
             position: relative;
         }
@@ -251,21 +250,23 @@
             align-self: flex-end;
             background: #5de4c7;
             color: #0a0c12;
+            border-radius: 20px 20px 4px 20px;
         }
         .chat-other {
             align-self: flex-start;
             background: rgba(40,46,80,0.9);
             color: #e5eaf5;
+            border-radius: 20px 20px 20px 4px;
         }
         .chat-time {
             font-size: 0.55rem;
             opacity: 0.6;
-            margin-top: 3px;
+            margin-top: 5px;
         }
         .chat-input-area {
             display: flex;
             gap: 0.8rem;
-            padding: 0.8rem;
+            padding: 1rem;
             border-top: 1px solid rgba(70,76,100,0.3);
         }
         .chat-input {
@@ -273,7 +274,7 @@
             background: rgba(10, 12, 20, 0.8);
             border: 1px solid rgba(70,76,100,0.5);
             border-radius: 25px;
-            padding: 0.6rem 1rem;
+            padding: 0.7rem 1rem;
             color: #c8d0e5;
             outline: none;
             font-size: 0.8rem;
@@ -282,9 +283,15 @@
             background: #5de4c7;
             border: none;
             border-radius: 25px;
-            padding: 0.6rem 1.2rem;
+            padding: 0.7rem 1.5rem;
             cursor: pointer;
             font-weight: bold;
+            color: #0a0c12;
+            transition: 0.2s;
+        }
+        .btn-send:hover {
+            background: #4ac7b0;
+            transform: scale(0.98);
         }
         .connection-status {
             padding: 0.5rem;
@@ -295,6 +302,8 @@
         }
         .status-connected { color: #5de4c7; }
         .status-disconnected { color: #ff6666; }
+        
+        /* EDITOR 4 PANEL */
         .editor-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -314,6 +323,15 @@
             padding: 0.5rem 0.8rem;
             display: flex;
             justify-content: space-between;
+            font-size: 0.7rem;
+            border-radius: 12px 12px 0 0;
+        }
+        .editor-header .title { color: #5de4c7; }
+        .close-panel {
+            background: none;
+            border: none;
+            color: #ff8888;
+            cursor: pointer;
             font-size: 0.7rem;
         }
         .editor-textarea {
@@ -336,6 +354,8 @@
             font-size: 0.8rem;
             cursor: pointer;
         }
+        
+        /* POSTS */
         .post {
             background: rgba(18, 22, 35, 0.7);
             border: 1px solid rgba(70,76,100,0.3);
@@ -361,12 +381,74 @@
         }
         .post-username { color: #e5eaf5; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
         .post-time { font-size: 0.65rem; color: #8a95aa; }
-        .post-content { color: #c8d0e5; font-size: 0.85rem; margin: 0.5rem 0; }
+        .post-content { color: #c8d0e5; font-size: 0.85rem; margin: 0.5rem 0; line-height: 1.4; }
         .post-media { margin: 0.5rem 0; text-align: center; }
         .post-media img { max-width: 100%; max-height: 200px; border-radius: 12px; }
         .post-actions { display: flex; gap: 1.5rem; padding-top: 0.5rem; border-top: 1px solid rgba(70,76,100,0.3); }
         .post-like, .post-comment { color: #aab4c8; font-size: 0.8rem; cursor: pointer; }
         .post-like.liked { color: #ff7777; }
+        
+        /* NEW POST */
+        .new-post {
+            background: rgba(18, 22, 35, 0.7);
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .post-type {
+            display: flex;
+            gap: 0.8rem;
+            margin-bottom: 0.8rem;
+        }
+        .type-btn {
+            background: rgba(30,35,55,0.8);
+            border: 1px solid rgba(70,76,100,0.5);
+            border-radius: 25px;
+            padding: 0.4rem 1rem;
+            color: #c8d0e5;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: 0.2s;
+        }
+        .type-btn.active { background: #5de4c7; color: #0a0c12; }
+        .post-input {
+            width: 100%;
+            background: rgba(10, 12, 20, 0.8);
+            border: 1px solid rgba(70,76,100,0.5);
+            border-radius: 12px;
+            padding: 0.8rem;
+            color: #c8d0e5;
+            font-size: 0.8rem;
+            resize: vertical;
+            outline: none;
+        }
+        .media-input {
+            width: 100%;
+            background: rgba(10, 12, 20, 0.8);
+            border: 1px solid rgba(70,76,100,0.5);
+            border-radius: 12px;
+            padding: 0.6rem;
+            margin-top: 0.5rem;
+            color: #c8d0e5;
+            font-size: 0.75rem;
+            outline: none;
+        }
+        .btn-post {
+            margin-top: 0.8rem;
+            background: #5de4c7;
+            color: #0a0c12;
+            border: none;
+            border-radius: 25px;
+            padding: 0.5rem 1.5rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: 0.2s;
+        }
+        .btn-post:hover {
+            background: #4ac7b0;
+        }
+        
+        /* RANKING */
         .rank-item {
             display: flex;
             align-items: center;
@@ -380,6 +462,8 @@
         .rank-name { color: #e5eaf5; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
         .rank-stats { font-size: 0.65rem; color: #8a95aa; }
         .rank-score { color: #5de4c7; font-weight: bold; margin-left: auto; font-size: 0.9rem; }
+        
+        /* DRAWER */
         .drawer {
             position: fixed;
             top: 0;
@@ -394,7 +478,7 @@
             padding: 2rem;
         }
         .drawer.open { right: 0; }
-        .drawer-header { display: flex; justify-content: space-between; color: #e5eaf5; margin-bottom: 1rem; }
+        .drawer-header { display: flex; justify-content: space-between; color: #e5eaf5; margin-bottom: 1rem; font-size: 1rem; }
         .drawer-close { background: none; border: none; color: #aab4c8; font-size: 1.8rem; cursor: pointer; }
         .avatar-large {
             width: 90px;
@@ -417,6 +501,7 @@
             color: #c8d0e5;
             outline: none;
             margin-bottom: 1rem;
+            font-size: 0.85rem;
         }
         .drawer-btn {
             background: rgba(30,35,55,0.9);
@@ -426,6 +511,11 @@
             color: #c8d0e5;
             cursor: pointer;
             width: 100%;
+            font-size: 0.85rem;
+            transition: 0.2s;
+        }
+        .drawer-btn:hover {
+            background: rgba(50,58,85,0.9);
         }
         .toast {
             position: fixed;
@@ -449,6 +539,17 @@
             font-size: 0.65rem;
             color: #aab4c8;
         }
+        
+        /* BUTTON STYLES (rounded) */
+        button, .btn, .drawer-btn, .btn-post, .btn-send, .type-btn, .settings-icon {
+            border-radius: 25px !important;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        button:hover, .btn:hover, .drawer-btn:hover, .btn-post:hover, .btn-send:hover, .type-btn:hover {
+            transform: translateY(-2px);
+        }
+        
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: rgba(8, 10, 18, 0.5); }
         ::-webkit-scrollbar-thumb { background: #5de4c7; border-radius: 5px; }
@@ -470,7 +571,7 @@
             <button class="settings-icon" id="settingsBtn"><i class="fas fa-cog"></i></button>
         </div>
         
-        <!-- ONLINE USERS SECTION - AUTO CONNECT -->
+        <!-- ONLINE USERS SECTION -->
         <div class="online-users-section">
             <div class="section-title">
                 <i class="fas fa-users"></i> ONLINE USERS
@@ -530,11 +631,9 @@
     
     // P2P Chat variables
     let peer = null;
-    let activeConnections = {}; // Store connections by username
+    let activeConnections = {};
     let currentChatUser = null;
-    let onlineUsers = {};
     let heartbeatInterval = null;
-    let onlineCheckInterval = null;
     
     function saveUsers() { localStorage.setItem('greyhack_users', JSON.stringify(users)); }
     function saveBlocked() { localStorage.setItem('grey_blocked', JSON.stringify(blockedUsers)); }
@@ -543,7 +642,39 @@
     function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
     function escapeHtml(str) { return str?.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])) || ''; }
     
-    // Update online status in localStorage
+    // Background typing animation
+    const bgContainer = document.getElementById('bgContainer');
+    const bgCmds = [
+        "> connecting to secure server...",
+        "> peer-to-peer chat active",
+        "$ online users: click to chat",
+        "> end-to-end encrypted",
+        "$ no server, direct connection",
+        "> type /help for commands"
+    ];
+    let bgIdx = 0, bgCharIdx = 0, bgIsTyping = true;
+    function typeBackground() {
+        if (bgIsTyping) {
+            if (bgCharIdx < bgCmds[bgIdx % bgCmds.length].length) {
+                const currentLine = bgCmds[bgIdx % bgCmds.length].substring(0, bgCharIdx + 1);
+                bgContainer.innerHTML = `<div class="bg-line"><span class="bg-prompt">grey@hack:~$ </span>${currentLine}<span class="bg-cursor"></span></div>`;
+                bgCharIdx++;
+                setTimeout(typeBackground, 40 + Math.random() * 30);
+            } else {
+                bgContainer.innerHTML = `<div class="bg-line"><span class="bg-prompt">grey@hack:~$ </span>${bgCmds[bgIdx % bgCmds.length]}</div>`;
+                bgIsTyping = false;
+                setTimeout(() => {
+                    bgIdx++;
+                    bgCharIdx = 0;
+                    bgIsTyping = true;
+                    typeBackground();
+                }, 2000);
+            }
+        }
+    }
+    setTimeout(typeBackground, 500);
+    
+    // Update online status
     function updateOnlineStatus() {
         if (!currentUser) return;
         const status = {
@@ -554,27 +685,21 @@
         };
         localStorage.setItem(`p2p_online_${currentUser.username}`, JSON.stringify(status));
         
-        // Clean old entries (older than 10 seconds)
-        const allKeys = Object.keys(localStorage);
         const now = Date.now();
-        allKeys.forEach(key => {
+        Object.keys(localStorage).forEach(key => {
             if (key.startsWith('p2p_online_')) {
                 try {
                     const data = JSON.parse(localStorage.getItem(key));
-                    if (now - data.timestamp > 10000) {
-                        localStorage.removeItem(key);
-                    }
+                    if (now - data.timestamp > 10000) localStorage.removeItem(key);
                 } catch(e) {}
             }
         });
     }
     
-    // Get online users
     function getOnlineUsers() {
         const online = [];
-        const allKeys = Object.keys(localStorage);
         const now = Date.now();
-        allKeys.forEach(key => {
+        Object.keys(localStorage).forEach(key => {
             if (key.startsWith('p2p_online_') && !key.includes(currentUser?.username)) {
                 try {
                     const data = JSON.parse(localStorage.getItem(key));
@@ -589,7 +714,6 @@
         return online;
     }
     
-    // Get or create Peer ID for a user
     function getPeerIdForUser(username) {
         let peerId = localStorage.getItem(`p2p_id_${username}`);
         if (!peerId) {
@@ -599,7 +723,6 @@
         return peerId;
     }
     
-    // Connect to a user
     function connectToUser(username, peerId) {
         if (activeConnections[username]) {
             showToast(`Already connected to ${username}`);
@@ -607,10 +730,7 @@
             return;
         }
         
-        if (!peer) {
-            showToast("Peer not initialized yet. Please wait...");
-            return;
-        }
+        if (!peer) { showToast("Please wait, connecting..."); return; }
         
         const conn = peer.connect(peerId);
         
@@ -618,12 +738,7 @@
             activeConnections[username] = conn;
             showToast(`Connected to ${username}!`);
             openChatPanel(username);
-            
-            // Send online status
-            conn.send({
-                type: 'status',
-                status: 'online'
-            });
+            conn.send({ type: 'status', status: 'online' });
         });
         
         conn.on('data', (data) => {
@@ -634,74 +749,46 @@
         
         conn.on('close', () => {
             delete activeConnections[username];
-            if (currentChatUser === username) {
-                closeChatPanel();
-            }
+            if (currentChatUser === username) closeChatPanel();
             showToast(`${username} disconnected`);
         });
         
-        conn.on('error', (err) => {
-            console.error(err);
-            delete activeConnections[username];
-        });
+        conn.on('error', (err) => { console.error(err); delete activeConnections[username]; });
     }
     
-    // Send chat message
     function sendChatMessage() {
         const input = document.getElementById('chatInput');
         const msg = input?.value.trim();
         if (!msg || !currentChatUser) return;
         
         const conn = activeConnections[currentChatUser];
-        if (!conn) {
-            showToast(`Not connected to ${currentChatUser}`);
-            return;
-        }
+        if (!conn) { showToast(`Not connected to ${currentChatUser}`); return; }
         
-        conn.send({
-            type: 'chat',
-            message: msg,
-            time: new Date().toLocaleTimeString()
-        });
-        
+        conn.send({ type: 'chat', message: msg, time: new Date().toLocaleTimeString() });
         addChatMessageToUI(msg, true);
         input.value = '';
     }
     
-    // Receive chat message
     function receiveChatMessage(username, message, time) {
         if (currentChatUser === username) {
             addChatMessageToUI(message, false, time);
         } else {
-            // Show notification
             showToast(`New message from ${username}`);
-            // Store for later
-            const pendingKey = `pending_msg_${username}`;
-            const pending = JSON.parse(localStorage.getItem(pendingKey) || '[]');
-            pending.push({ message, time });
-            localStorage.setItem(pendingKey, JSON.stringify(pending));
         }
     }
     
-    // Add message to chat UI
     function addChatMessageToUI(message, isMine, time = null) {
         const container = document.getElementById('chatMessages');
         if (!container) return;
-        
         const div = document.createElement('div');
         div.className = `chat-bubble ${isMine ? 'chat-mine' : 'chat-other'}`;
-        div.innerHTML = `
-            <div>${escapeHtml(message)}</div>
-            <div class="chat-time">${time || new Date().toLocaleTimeString()}</div>
-        `;
+        div.innerHTML = `<div>${escapeHtml(message)}</div><div class="chat-time">${time || new Date().toLocaleTimeString()}</div>`;
         container.appendChild(div);
         container.scrollTop = container.scrollHeight;
     }
     
-    // Open chat panel
     function openChatPanel(username) {
         currentChatUser = username;
-        
         const main = document.getElementById('mainContent');
         main.innerHTML = `
             <div class="card">
@@ -721,38 +808,19 @@
                 </div>
             </div>
         `;
-        
-        // Load pending messages
-        const pendingKey = `pending_msg_${username}`;
-        const pending = JSON.parse(localStorage.getItem(pendingKey) || '[]');
-        if (pending.length > 0) {
-            setTimeout(() => {
-                pending.forEach(p => {
-                    addChatMessageToUI(p.message, false, p.time);
-                });
-                localStorage.removeItem(pendingKey);
-            }, 100);
-        }
     }
     
-    function closeChatPanel() {
-        currentChatUser = null;
-        setPage(currentPage);
-    }
+    function closeChatPanel() { currentChatUser = null; setPage(currentPage); }
     
-    // Render online users list
     function renderOnlineUsers() {
         const online = getOnlineUsers();
         const container = document.getElementById('onlineUsersList');
         if (!container) return;
-        
         document.getElementById('onlineCount').innerText = `(${online.length})`;
-        
         if (online.length === 0) {
             container.innerHTML = '<div style="padding:0.5rem;color:#8a95aa;text-align:center;">No users online</div>';
             return;
         }
-        
         container.innerHTML = online.map(user => `
             <div class="online-user ${currentChatUser === user.username ? 'active-chat' : ''}" onclick="connectToUser('${user.username}', '${user.peerId}')">
                 <span class="online-status"></span>
@@ -762,12 +830,9 @@
         `).join('');
     }
     
-    // Initialize P2P
     function initP2P() {
         if (!currentUser) return;
-        
         const myPeerId = getPeerIdForUser(currentUser.username);
-        
         peer = new Peer(myPeerId, {
             host: '0.peerjs.com',
             port: 443,
@@ -775,70 +840,17 @@
             secure: true,
             debug: 0
         });
-        
-        peer.on('open', () => {
-            console.log('PeerJS ready:', myPeerId);
-            updateOnlineStatus();
-            startHeartbeat();
-        });
-        
+        peer.on('open', () => { updateOnlineStatus(); heartbeatInterval = setInterval(updateOnlineStatus, 3000); });
         peer.on('connection', (conn) => {
             const username = conn.peer.split('_')[0];
             activeConnections[username] = conn;
-            
-            conn.on('data', (data) => {
-                if (data.type === 'chat') {
-                    receiveChatMessage(username, data.message, data.time);
-                }
-            });
-            
-            conn.on('close', () => {
-                delete activeConnections[username];
-            });
+            conn.on('data', (data) => { if (data.type === 'chat') receiveChatMessage(username, data.message, data.time); });
+            conn.on('close', () => { delete activeConnections[username]; });
         });
-        
-        peer.on('error', (err) => {
-            console.warn('Peer error:', err);
-        });
+        peer.on('error', (err) => { console.warn(err); });
     }
     
-    function startHeartbeat() {
-        if (heartbeatInterval) clearInterval(heartbeatInterval);
-        heartbeatInterval = setInterval(() => {
-            updateOnlineStatus();
-        }, 3000);
-    }
-    
-    // Background typing effect
-    const bgContainer = document.getElementById('bgContainer');
-    const bgCmds = [
-        "> connecting to secure server...",
-        "> peer-to-peer chat active",
-        "$ online users: click to chat",
-        "> end-to-end encrypted",
-        "$ no server, direct connection"
-    ];
-    let bgIdx = 0, bgCharIdx = 0, bgIsTyping = true;
-    function typeBackground() {
-        if (bgIsTyping) {
-            if (bgCharIdx < bgCmds[bgIdx % bgCmds.length].length) {
-                const currentLine = bgCmds[bgIdx % bgCmds.length].substring(0, bgCharIdx + 1);
-                bgContainer.innerHTML = `<div class="bg-line"><span class="bg-prompt">grey@hack:~$ </span>${currentLine}<span class="bg-cursor"></span></div>`;
-                bgCharIdx++;
-                setTimeout(typeBackground, 35 + Math.random() * 25);
-            } else {
-                bgContainer.innerHTML = `<div class="bg-line"><span class="bg-prompt">grey@hack:~$ </span>${bgCmds[bgIdx % bgCmds.length]}</div>`;
-                bgIsTyping = false;
-                setTimeout(() => {
-                    bgIdx++;
-                    bgCharIdx = 0;
-                    bgIsTyping = true;
-                    typeBackground();
-                }, 1800);
-            }
-        }
-    }
-    setTimeout(typeBackground, 300);
+    setInterval(renderOnlineUsers, 2000);
     
     function loadUsers() {
         const stored = localStorage.getItem('greyhack_users');
@@ -874,16 +886,9 @@
     if (isAdmin) document.getElementById('adminMenu').style.display = 'flex';
     if (currentUser.workspace.panelFiles) panelFiles = currentUser.workspace.panelFiles;
     if (globalPosts.length === 0) {
-        globalPosts = [
-            { id: 1, username: "grey", type: "text", content: "Welcome to GreyH4ck! 👑", time: new Date().toLocaleString(), likes: [], comments: [] }
-        ];
+        globalPosts = [{ id: 1, username: "grey", type: "text", content: "Welcome to GreyH4ck! 👑", time: new Date().toLocaleString(), likes: [], comments: [] }];
         savePosts();
     }
-    
-    // Auto refresh online users
-    setInterval(() => {
-        renderOnlineUsers();
-    }, 2000);
     
     function renderFileList() {
         const container = document.getElementById('fileList');
@@ -903,7 +908,7 @@
     
     function renderEditorGrid() {
         const main = document.getElementById('mainContent');
-        main.innerHTML = `<div class="card"><div class="card-header"><i class="fas fa-code"></i> TERMUX EDITOR</div><div class="card-content"><div class="editor-grid">${[0,1,2,3].map(idx => `<div class="editor-panel"><div class="editor-header"><span class="title">${panelFiles[idx] || 'empty'}</span><button class="close-panel" data-panel="${idx}"><i class="fas fa-times"></i></button></div>${panelFiles[idx] ? `<textarea id="panel_${idx}" class="editor-textarea" data-file="${panelFiles[idx]}">${escapeHtml(currentUser.workspace.files[panelFiles[idx]]?.content || '')}</textarea>` : `<div class="empty-panel" onclick="window.promptSelectFile()">+ Select File</div>`}</div>`).join('')}</div></div></div><div class="status-bar">TERMUX • 4 panels</div>`;
+        main.innerHTML = `<div class="card"><div class="card-header"><i class="fas fa-code"></i> TERMUX EDITOR</div><div class="card-content"><div class="editor-grid">${[0,1,2,3].map(idx => `<div class="editor-panel"><div class="editor-header"><span class="title">${panelFiles[idx] || 'empty'}</span><button class="close-panel" data-panel="${idx}" style="background:none;border:none;color:#ff8888;cursor:pointer;"><i class="fas fa-times"></i></button></div>${panelFiles[idx] ? `<textarea id="panel_${idx}" class="editor-textarea" data-file="${panelFiles[idx]}">${escapeHtml(currentUser.workspace.files[panelFiles[idx]]?.content || '')}</textarea>` : `<div class="empty-panel" onclick="window.promptSelectFile()">+ Select File</div>`}</div>`).join('')}</div></div></div><div class="status-bar">TERMUX • 4 panels</div>`;
         for (let i = 0; i < 4; i++) { if (panelFiles[i]) { const ta = document.getElementById(`panel_${i}`); if (ta) ta.addEventListener('blur', function () { updateFileContent(this.dataset.file, this.value); }); } }
         document.querySelectorAll('.close-panel').forEach(btn => btn.addEventListener('click', (e) => { const i = parseInt(btn.dataset.panel); panelFiles[i] = null; savePanel(); renderEditorGrid(); }));
     }
@@ -919,7 +924,7 @@
     function postThread() {
         const content = document.getElementById('newPostContent')?.value.trim();
         if (!content) { showToast("Cannot post empty!"); return; }
-        globalPosts.unshift({ id: Date.now(), username: currentUser.username, type: postType, content: content, time: new Date().toLocaleString(), likes: [], comments: [], media: null });
+        globalPosts.unshift({ id: Date.now(), username: currentUser.username, type: postType, content: content, time: new Date().toLocaleString(), likes: [], comments: [] });
         savePosts();
         document.getElementById('newPostContent').value = '';
         renderThreads();
@@ -929,7 +934,7 @@
     function commentPost(id) { const comment = prompt("Write comment:"); if (!comment) return; const post = globalPosts.find(p => p.id === id); if (post) { post.comments.push({ user: currentUser.username, text: comment, time: new Date().toLocaleTimeString() }); savePosts(); renderThreads(); } }
     function renderThreads() {
         const main = document.getElementById('mainContent');
-        main.innerHTML = `<div class="card"><div class="card-header"><i class="fas fa-feather-alt"></i> THREADS</div><div class="card-content"><div class="new-post"><div class="post-type">${['text', 'image', 'gif'].map(t => `<button class="type-btn ${postType === t ? 'active' : ''}" data-type="${t}">${t.toUpperCase()}</button>`).join('')}</div><textarea id="newPostContent" class="post-input" rows="2" placeholder="Share something..."></textarea><div id="mediaContainer" style="display:${postType !== 'text' ? 'block' : 'none'}"><input id="mediaUrlInput" class="media-input" placeholder="Enter URL..."></div><button class="btn-post" onclick="window.postThread()">POST</button></div>${globalPosts.map(p => `<div class="post"><div class="post-header" onclick="window.openProfile('${p.username}')"><div class="post-avatar"><i class="fas fa-user-secret"></i></div><div><div class="post-username">${p.username} ${p.username === ADMIN ? '👑' : ''}</div><div class="post-time">${p.time}</div></div></div><div class="post-content">${escapeHtml(p.content)}</div><div class="post-actions"><span class="post-like ${p.likes.includes(currentUser.username) ? 'liked' : ''}" onclick="window.likePost(${p.id})"><i class="fas fa-heart"></i> ${p.likes.length}</span><span class="post-comment" onclick="window.commentPost(${p.id})"><i class="fas fa-comment"></i> ${p.comments?.length || 0}</span></div>${p.comments?.length ? `<div style="margin-top:0.5rem;font-size:0.7rem;border-top:1px solid rgba(70,76,100,0.3);padding-top:0.5rem;">${p.comments.slice(-2).map(c => `<div><span style="color:#5de4c7;">${c.user}:</span> ${escapeHtml(c.text)}</div>`).join('')}</div>` : ''}</div>`).join('')}</div></div>`;
+        main.innerHTML = `<div class="card"><div class="card-header"><i class="fas fa-feather-alt"></i> THREADS</div><div class="card-content"><div class="new-post"><div class="post-type">${['text', 'image', 'gif'].map(t => `<button class="type-btn ${postType === t ? 'active' : ''}" data-type="${t}">${t.toUpperCase()}</button>`).join('')}</div><textarea id="newPostContent" class="post-input" rows="2" placeholder="Share something..."></textarea><div id="mediaContainer" style="display:${postType !== 'text' ? 'block' : 'none'}"><input id="mediaUrlInput" class="media-input" placeholder="Enter URL..."></div><button class="btn-post" onclick="window.postThread()">POST</button></div>${globalPosts.map(p => `<div class="post"><div class="post-header" onclick="window.openProfile('${p.username}')"><div class="post-avatar"><i class="fas fa-user-secret"></i></div><div><div class="post-username">${p.username} ${p.username === ADMIN ? '👑' : ''}</div><div class="post-time">${p.time}</div></div></div><div class="post-content">${escapeHtml(p.content)}</div><div class="post-actions"><span class="post-like ${p.likes.includes(currentUser.username) ? 'liked' : ''}" onclick="window.likePost(${p.id})"><i class="fas fa-heart"></i> ${p.likes.length}</span><span class="post-comment" onclick="window.commentPost(${p.id})"><i class="fas fa-comment"></i> ${p.comments?.length || 0}</span></div></div>`).join('')}</div></div>`;
         document.querySelectorAll('[data-type]').forEach(btn => btn.addEventListener('click', () => { postType = btn.dataset.type; document.querySelectorAll('[data-type]').forEach(b => b.classList.remove('active')); btn.classList.add('active'); document.getElementById('mediaContainer').style.display = postType !== 'text' ? 'block' : 'none'; }));
     }
     
@@ -956,7 +961,7 @@
         const filesCount = Object.keys(currentUser.workspace.files).length;
         const postsCount = globalPosts.length;
         const likesCount = globalPosts.reduce((s, p) => s + p.likes.length, 0);
-        document.getElementById('mainContent').innerHTML = `<div class="card"><div class="card-header"><i class="fas fa-tachometer-alt"></i> DASHBOARD</div><div class="card-content" style="text-align:center;padding:2rem;"><div style="font-size:1.8rem;color:#5de4c7;">⚡ GreyH4ck Terminal</div><div style="margin:0.8rem 0;font-size:1rem;color:#c8d0e5;">${greeting}, ${currentUser.username}${isAdmin ? ' 👑' : ''}</div><div style="width:60px;height:2px;background:#5de4c7;margin:1rem auto;"></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:2rem;"><div style="background:rgba(30,35,55,0.6);padding:1rem;border-radius:14px;"><i class="fas fa-file-alt"></i><div style="margin-top:0.3rem;">FILES</div><div style="font-size:1.5rem;">${filesCount}</div></div><div style="background:rgba(30,35,55,0.6);padding:1rem;border-radius:14px;"><i class="fas fa-feather-alt"></i><div style="margin-top:0.3rem;">POSTS</div><div style="font-size:1.5rem;">${postsCount}</div></div><div style="background:rgba(30,35,55,0.6);padding:1rem;border-radius:14px;"><i class="fas fa-heart"></i><div style="margin-top:0.3rem;">LIKES</div><div style="font-size:1.5rem;">${likesCount}</div></div></div></div></div>`;
+        document.getElementById('mainContent').innerHTML = `<div class="card"><div class="card-header"><i class="fas fa-tachometer-alt"></i> DASHBOARD</div><div class="card-content" style="text-align:center;padding:2rem;"><div style="font-size:1.8rem;color:#5de4c7;">⚡ GreyH4ck Terminal</div><div style="margin:0.8rem 0;font-size:1rem;color:#c8d0e5;">${greeting}, ${currentUser.username}${isAdmin ? ' 👑' : ''}</div><div style="width:60px;height:2px;background:#5de4c7;margin:1rem auto;"></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:2rem;"><div style="background:rgba(30,35,55,0.6);padding:1rem;border-radius:14px;"><i class="fas fa-file-alt"></i><div>FILES</div><div style="font-size:1.5rem;">${filesCount}</div></div><div style="background:rgba(30,35,55,0.6);padding:1rem;border-radius:14px;"><i class="fas fa-feather-alt"></i><div>POSTS</div><div style="font-size:1.5rem;">${postsCount}</div></div><div style="background:rgba(30,35,55,0.6);padding:1rem;border-radius:14px;"><i class="fas fa-heart"></i><div>LIKES</div><div style="font-size:1.5rem;">${likesCount}</div></div></div></div></div>`;
     }
     
     function renderAdmin() {
@@ -1017,7 +1022,6 @@
         }
     };
     
-    // Expose functions globally
     window.connectToUser = connectToUser;
     window.sendChatMessage = sendChatMessage;
     window.closeChatPanel = closeChatPanel;
