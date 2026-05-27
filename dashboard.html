@@ -15,7 +15,7 @@
             overflow: hidden;
             font-size: clamp(12px, 4vw, 15px);
         }
-        /* BACKGROUND TYPING - JELAS & KELIHATAN */
+        /* BACKGROUND TYPING */
         .bg-terminal {
             position: fixed;
             top: 0;
@@ -35,19 +35,9 @@
             font-size: 12px;
             line-height: 1.7;
             font-family: 'Fira Code', monospace;
-            text-shadow: 0 0 2px rgba(0,0,0,0.5);
         }
-        .bg-line {
-            margin-bottom: 5px;
-            opacity: 0.85;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
-        .bg-prompt { 
-            color: #aab4c8; 
-            display: inline-block;
-            font-weight: bold;
-        }
+        .bg-line { margin-bottom: 5px; opacity: 0.85; }
+        .bg-prompt { color: #aab4c8; display: inline-block; font-weight: bold; }
         .bg-cursor {
             display: inline-block;
             width: 8px;
@@ -76,24 +66,23 @@
         .scanline {
             background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 2px, transparent 2px, transparent 8px);
         }
-        /* Main Layout */
+        /* Layout */
         .app { display: flex; height: 100vh; position: relative; z-index: 10; flex-wrap: wrap; }
         .sidebar {
             width: 280px;
             background: rgba(12, 15, 24, 0.85);
             backdrop-filter: blur(14px);
-            border-right: 1px solid rgba(70, 76, 100, 0.3);
+            border-right: 1px solid rgba(70,76,100,0.3);
             display: flex;
             flex-direction: column;
             overflow-y: auto;
         }
         @media (max-width: 768px) {
-            .sidebar { width: 100%; max-height: 55px; flex-direction: row; overflow-x: auto; overflow-y: hidden; border-right: none; border-bottom: 1px solid rgba(70,76,100,0.3); }
-            .profile-card { padding: 0.4rem 0.8rem; border-bottom: none; }
+            .sidebar { width: 100%; max-height: 55px; flex-direction: row; overflow-x: auto; border-bottom: 1px solid rgba(70,76,100,0.3); }
+            .profile-card { padding: 0.4rem 0.8rem; }
             .profile-card .avatar { width: 38px; height: 38px; }
-            .profile-card .username { font-size: 0.8rem; }
             .search-box { display: none; }
-            .menu { display: flex; flex-wrap: nowrap; overflow-x: auto; padding: 0.3rem 0; border-bottom: none; }
+            .menu { display: flex; flex-wrap: nowrap; overflow-x: auto; padding: 0.3rem 0; }
             .menu-item { white-space: nowrap; padding: 0.4rem 1rem; }
             .file-section { display: none; }
             .main { padding: 0.5rem; }
@@ -116,7 +105,9 @@
             align-items: center;
             justify-content: center;
             border: 2px solid rgba(130,140,170,0.5);
+            overflow: hidden;
         }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; }
         .avatar i { font-size: 1.6rem; color: #c8d0e5; }
         .username { color: #e5eaf5; font-size: 1rem; font-weight: 600; }
         .god-badge {
@@ -213,7 +204,7 @@
         .file-item:hover .file-del { opacity: 1; }
         .main { flex: 1; padding: 0.8rem; overflow-y: auto; background: transparent; }
         
-        /* Cards - Transparent */
+        /* Cards */
         .card {
             background: rgba(10, 12, 20, 0.65);
             backdrop-filter: blur(12px);
@@ -300,7 +291,9 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
         }
+        .post-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .post-username { color: #e5eaf5; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
         .post-time { font-size: 0.65rem; color: #8a95aa; }
         .post-content { color: #c8d0e5; font-size: 0.85rem; margin: 0.5rem 0; line-height: 1.4; }
@@ -416,7 +409,11 @@
         
         /* Community */
         .community-layout { display: flex; flex: 1; flex-wrap: wrap; }
-        @media (max-width: 768px) { .community-layout { flex-direction: column; } .group-list { width: 100%; max-height: 100px; flex-direction: row; overflow-x: auto; } .member-list { width: 100%; max-height: 80px; } }
+        @media (max-width: 768px) {
+            .community-layout { flex-direction: column; }
+            .group-list { width: 100%; max-height: 100px; flex-direction: row; overflow-x: auto; }
+            .member-list { width: 100%; max-height: 80px; }
+        }
         .group-list {
             width: 240px;
             background: rgba(8, 10, 18, 0.5);
@@ -486,7 +483,9 @@
             margin: 0 auto;
             border: 3px solid #5de4c7;
             font-size: 2.2rem;
+            overflow: hidden;
         }
+        .profile-avatar-large img { width: 100%; height: 100%; object-fit: cover; }
         .profile-stats {
             display: flex;
             justify-content: center;
@@ -586,7 +585,9 @@
             margin: 0 auto;
             border: 2px solid #8a95aa;
             cursor: pointer;
+            overflow: hidden;
         }
+        .avatar-large img { width: 100%; height: 100%; object-fit: cover; }
         .drawer-input {
             width: 100%;
             background: rgba(5, 7, 12, 0.9);
@@ -723,7 +724,31 @@
     }
     function addNotif(msg, type) { notifications.unshift({ id: Date.now(), message: msg, type, time: new Date().toLocaleTimeString(), read: false }); if (notifications.length > 30) notifications.pop(); saveNotif(); updateNotifBadge(); }
 
-    // ========== BACKGROUND TYPING ANIMATION - JELAS ==========
+    // ========== LIVE AVATAR UPDATE - LISTEN TO STORAGE EVENTS ==========
+    function setupLiveAvatarListener() {
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'greyhack_users') {
+                const newUsers = JSON.parse(e.newValue);
+                if (newUsers) {
+                    // Update current user if exists
+                    const updatedCurrent = newUsers.find(u => u.username === currentUser.username);
+                    if (updatedCurrent && updatedCurrent.workspace?.avatar !== currentUser.workspace?.avatar) {
+                        currentUser.workspace.avatar = updatedCurrent.workspace?.avatar;
+                        updateSidebar();
+                        // Refresh any open profile pages
+                        if (viewingProfile) renderProfile();
+                        if (currentPage === 'community') renderCommunity();
+                        if (currentPage === 'ranking') renderRanking();
+                        showToast(`${currentUser.username}'s avatar updated!`);
+                    }
+                    // Update users database
+                    users = newUsers;
+                }
+            }
+        });
+    }
+    
+    // ========== BACKGROUND TYPING ANIMATION ==========
     const bgContainer = document.getElementById('bgContainer');
     const bgCmds = [
         "> connecting to secure server...",
@@ -763,14 +788,15 @@
         }
     }
     setTimeout(typeBackground, 300);
+    setupLiveAvatarListener();
 
     function loadUsers() {
         const stored = localStorage.getItem('greyhack_users');
         if (stored) users = JSON.parse(stored);
         else {
             users = [
-                { username: "grey", password: "grey123", email: "god@greyh4ck.com", bio: "👑 THE GOD OF H4CKERS", followers: 301500, following: [], workspace: { files: { "demo.html": { content: "<h1>Hello GreyH4ck!</h1>", type: "html" }, "script.js": { content: "console.log('Welcome!');", type: "js" } }, panelFiles: [null, null, null, null] } },
-                { username: "nexus", password: "nexus99", email: "nexus@test.com", bio: "Security Expert 🔒", followers: 1234, following: [], workspace: { files: {}, panelFiles: [null, null, null, null] } }
+                { username: "grey", password: "grey123", email: "god@greyh4ck.com", bio: "👑 THE GOD OF H4CKERS", followers: 301500, following: [], workspace: { files: { "demo.html": { content: "<h1>Hello GreyH4ck!</h1>", type: "html" }, "script.js": { content: "console.log('Welcome!');", type: "js" } }, panelFiles: [null, null, null, null], avatar: null } },
+                { username: "nexus", password: "nexus99", email: "nexus@test.com", bio: "Security Expert 🔒", followers: 1234, following: [], workspace: { files: {}, panelFiles: [null, null, null, null], avatar: null } }
             ];
             saveUsers();
         }
@@ -779,10 +805,11 @@
             const { username } = JSON.parse(session);
             if (blockedUsers.includes(username)) { sessionStorage.removeItem('greySession'); window.location.href = 'login.html'; return; }
             currentUser = users.find(u => u.username === username);
-            if (currentUser && !currentUser.workspace) currentUser.workspace = { files: {}, panelFiles: [null, null, null, null] };
+            if (currentUser && !currentUser.workspace) currentUser.workspace = { files: {}, panelFiles: [null, null, null, null], avatar: null };
             if (currentUser && !currentUser.workspace.files) currentUser.workspace.files = {};
             if (currentUser && !currentUser.following) currentUser.following = [];
             if (currentUser && currentUser.followers === undefined) currentUser.followers = 0;
+            if (currentUser && currentUser.workspace.avatar === undefined) currentUser.workspace.avatar = null;
         }
     }
     function updateUser(updated) {
@@ -790,6 +817,8 @@
         if (idx !== -1) users[idx] = updated;
         saveUsers();
         if (currentUser?.username === updated.username) currentUser = updated;
+        // Trigger storage event untuk live update semua user
+        window.dispatchEvent(new StorageEvent('storage', { key: 'greyhack_users', newValue: JSON.stringify(users) }));
     }
 
     loadUsers();
@@ -812,17 +841,29 @@
         refreshInterval = setInterval(() => {
             const storedPosts = JSON.parse(localStorage.getItem('grey_posts') || '[]');
             const storedNotif = JSON.parse(localStorage.getItem('notifications') || '[]');
+            const storedUsers = JSON.parse(localStorage.getItem('greyhack_users') || '[]');
+            
             if (JSON.stringify(storedPosts) !== JSON.stringify(globalPosts)) {
                 globalPosts = storedPosts;
                 if (currentPage === 'threads') renderThreads();
                 if (currentPage === 'ranking') renderRanking();
-                if (currentPage === 'profile') renderProfile();
             }
             if (JSON.stringify(storedNotif) !== JSON.stringify(notifications)) {
                 notifications = storedNotif;
                 updateNotifBadge();
             }
-        }, 1000);
+            // Check for avatar updates in users
+            if (JSON.stringify(storedUsers) !== JSON.stringify(users)) {
+                const oldAvatar = currentUser?.workspace?.avatar;
+                const newUser = storedUsers.find(u => u.username === currentUser?.username);
+                if (newUser && newUser.workspace?.avatar !== oldAvatar) {
+                    currentUser.workspace.avatar = newUser.workspace?.avatar;
+                    updateSidebar();
+                    if (viewingProfile) renderProfile();
+                }
+                users = storedUsers;
+            }
+        }, 800);
     }
     startAutoRefresh();
 
@@ -871,7 +912,15 @@
     function commentPost(id) { const comment = prompt("Write comment:"); if (!comment) return; const post = globalPosts.find(p => p.id === id); if (post) { post.comments.push({ user: currentUser.username, text: comment, time: new Date().toLocaleTimeString() }); savePosts(); if (post.username !== currentUser.username) addNotif(`${currentUser.username} commented: "${comment.substring(0,30)}"`, 'comment'); renderThreads(); } }
     function renderThreads() {
         const main = document.getElementById('mainContent');
-        main.innerHTML = `<div class="card"><div class="card-header"><i class="fas fa-feather-alt"></i> THREADS</div><div class="card-content"><div class="new-post"><div class="post-type">${['text', 'image', 'gif'].map(t => `<button class="type-btn ${postType === t ? 'active' : ''}" data-type="${t}">${t.toUpperCase()}</button>`).join('')}</div><textarea id="newPostContent" class="post-input" rows="2" placeholder="Share something..."></textarea><div id="mediaContainer" style="display:${postType !== 'text' ? 'block' : 'none'}"><input id="mediaUrlInput" class="media-input" placeholder="Enter URL..."></div><button class="btn-post" onclick="window.postThread()">POST</button></div>${globalPosts.map(p => `<div class="post"><div class="post-header" onclick="window.openProfile('${p.username}')"><div class="post-avatar"><i class="fas fa-user-secret"></i></div><div><div class="post-username">${p.username} ${p.username === ADMIN ? '👑' : ''}</div><div class="post-time">${p.time}</div></div></div><div class="post-content">${escapeHtml(p.content)}</div>${p.type !== 'text' && p.media ? `<div class="post-media"><img src="${p.media}" onerror="this.style.display='none'"></div>` : ''}<div class="post-actions"><span class="post-like ${p.likes.includes(currentUser.username) ? 'liked' : ''}" onclick="window.likePost(${p.id})"><i class="fas fa-heart"></i> ${p.likes.length}</span><span class="post-comment" onclick="window.commentPost(${p.id})"><i class="fas fa-comment"></i> ${p.comments?.length || 0}</span></div>${p.comments?.length ? `<div style="margin-top:0.5rem;font-size:0.7rem;border-top:1px solid rgba(70,76,100,0.3);padding-top:0.5rem;">${p.comments.slice(-2).map(c => `<div><span style="color:#5de4c7;">${c.user}:</span> ${escapeHtml(c.text)}</div>`).join('')}</div>` : ''}</div>`).join('')}</div></div>`;
+        // Helper to get user avatar
+        const getUserAvatar = (username) => {
+            const user = users.find(u => u.username === username);
+            return user?.workspace?.avatar || null;
+        };
+        main.innerHTML = `<div class="card"><div class="card-header"><i class="fas fa-feather-alt"></i> THREADS</div><div class="card-content"><div class="new-post"><div class="post-type">${['text', 'image', 'gif'].map(t => `<button class="type-btn ${postType === t ? 'active' : ''}" data-type="${t}">${t.toUpperCase()}</button>`).join('')}</div><textarea id="newPostContent" class="post-input" rows="2" placeholder="Share something..."></textarea><div id="mediaContainer" style="display:${postType !== 'text' ? 'block' : 'none'}"><input id="mediaUrlInput" class="media-input" placeholder="Enter URL..."></div><button class="btn-post" onclick="window.postThread()">POST</button></div>${globalPosts.map(p => {
+            const avatar = getUserAvatar(p.username);
+            return `<div class="post"><div class="post-header" onclick="window.openProfile('${p.username}')"><div class="post-avatar">${avatar ? `<img src="${avatar}">` : '<i class="fas fa-user-secret"></i>'}</div><div><div class="post-username">${p.username} ${p.username === ADMIN ? '👑' : ''}</div><div class="post-time">${p.time}</div></div></div><div class="post-content">${escapeHtml(p.content)}</div>${p.type !== 'text' && p.media ? `<div class="post-media"><img src="${p.media}" onerror="this.style.display='none'"></div>` : ''}<div class="post-actions"><span class="post-like ${p.likes.includes(currentUser.username) ? 'liked' : ''}" onclick="window.likePost(${p.id})"><i class="fas fa-heart"></i> ${p.likes.length}</span><span class="post-comment" onclick="window.commentPost(${p.id})"><i class="fas fa-comment"></i> ${p.comments?.length || 0}</span></div>${p.comments?.length ? `<div style="margin-top:0.5rem;font-size:0.7rem;border-top:1px solid rgba(70,76,100,0.3);padding-top:0.5rem;">${p.comments.slice(-2).map(c => `<div><span style="color:#5de4c7;">${c.user}:</span> ${escapeHtml(c.text)}</div>`).join('')}</div>` : ''}</div>`;
+        }).join('')}</div></div>`;
         document.querySelectorAll('[data-type]').forEach(btn => btn.addEventListener('click', () => { postType = btn.dataset.type; document.querySelectorAll('[data-type]').forEach(b => b.classList.remove('active')); btn.classList.add('active'); document.getElementById('mediaContainer').style.display = postType !== 'text' ? 'block' : 'none'; }));
         notifications.forEach(n => n.read = true); saveNotif(); updateNotifBadge();
     }
@@ -896,8 +945,9 @@
         const isOwn = (currentUser.username === viewingProfile);
         const isGod = (user.username === ADMIN);
         const folDisplay = isGod ? "301.5K" : (user.followers || 0).toLocaleString();
+        const avatar = user.workspace?.avatar;
         const main = document.getElementById('mainContent');
-        main.innerHTML = `<div class="card"><div class="profile-cover"></div><div class="profile-info"><div class="profile-avatar-large"><i class="fas fa-user-secret"></i></div><h2 style="color:#5de4c7;">${user.username} ${isGod ? '<span class="spin">👑</span> GOD' : ''}</h2><div class="profile-stats"><div class="profile-stat"><div class="profile-stat-num">${userPosts.length}</div><div class="profile-stat-label">POSTS</div></div><div class="profile-stat"><div class="profile-stat-num">${folDisplay}</div><div class="profile-stat-label">FOLLOWERS</div></div><div class="profile-stat"><div class="profile-stat-num">${user.following?.length || 0}</div><div class="profile-stat-label">FOLLOWING</div></div></div><div class="profile-bio">${user.bio || 'No bio yet'}</div><div class="profile-bio" style="font-size:0.7rem;">📧 ${user.email || 'no email'}</div><div class="profile-buttons">${!isOwn ? `<button class="${isFollowing ? 'btn-unfollow' : 'btn-follow'}" onclick="window.toggleFollow('${user.username}')">${isFollowing ? 'UNFOLLOW' : 'FOLLOW'}</button><button class="btn-chat" onclick="window.openChat('${user.username}')">💬 CHAT</button>` : ''}<button class="btn-back" onclick="window.goBack()">← BACK</button></div></div><div class="profile-tabs"><div class="profile-tab ${profileTab === 'posts' ? 'active' : ''}" data-tab="posts">📝 POSTS</div><div class="profile-tab ${profileTab === 'media' ? 'active' : ''}" data-tab="media">🖼️ MEDIA</div><div class="profile-tab ${profileTab === 'files' ? 'active' : ''}" data-tab="files">📁 FILES</div></div><div class="profile-grid" id="profileGrid">${profileTab === 'posts' ? userPosts.map(p => `<div class="profile-grid-item" onclick="showToast('${escapeHtml(p.content)}')"><i class="fas fa-file-alt"></i></div>`).join('') : profileTab === 'media' ? userMedia.map(p => `<div class="profile-grid-item"><img src="${p.media}" style="width:100%;height:100%;object-fit:cover;" onerror="this.src='https://via.placeholder.com/100'"></div>`).join('') : Object.keys(user.workspace?.files || {}).map(f => `<div class="profile-grid-item" style="aspect-ratio:auto;padding:0.5rem;"><i class="fas fa-file-code"></i> ${f}</div>`).join('')}</div></div>`;
+        main.innerHTML = `<div class="card"><div class="profile-cover"></div><div class="profile-info"><div class="profile-avatar-large">${avatar ? `<img src="${avatar}">` : '<i class="fas fa-user-secret"></i>'}</div><h2 style="color:#5de4c7;">${user.username} ${isGod ? '<span class="spin">👑</span> GOD' : ''}</h2><div class="profile-stats"><div class="profile-stat"><div class="profile-stat-num">${userPosts.length}</div><div class="profile-stat-label">POSTS</div></div><div class="profile-stat"><div class="profile-stat-num">${folDisplay}</div><div class="profile-stat-label">FOLLOWERS</div></div><div class="profile-stat"><div class="profile-stat-num">${user.following?.length || 0}</div><div class="profile-stat-label">FOLLOWING</div></div></div><div class="profile-bio">${user.bio || 'No bio yet'}</div><div class="profile-bio" style="font-size:0.7rem;">📧 ${user.email || 'no email'}</div><div class="profile-buttons">${!isOwn ? `<button class="${isFollowing ? 'btn-unfollow' : 'btn-follow'}" onclick="window.toggleFollow('${user.username}')">${isFollowing ? 'UNFOLLOW' : 'FOLLOW'}</button><button class="btn-chat" onclick="window.openChat('${user.username}')">💬 CHAT</button>` : ''}<button class="btn-back" onclick="window.goBack()">← BACK</button></div></div><div class="profile-tabs"><div class="profile-tab ${profileTab === 'posts' ? 'active' : ''}" data-tab="posts">📝 POSTS</div><div class="profile-tab ${profileTab === 'media' ? 'active' : ''}" data-tab="media">🖼️ MEDIA</div><div class="profile-tab ${profileTab === 'files' ? 'active' : ''}" data-tab="files">📁 FILES</div></div><div class="profile-grid" id="profileGrid">${profileTab === 'posts' ? userPosts.map(p => `<div class="profile-grid-item" onclick="showToast('${escapeHtml(p.content)}')"><i class="fas fa-file-alt"></i></div>`).join('') : profileTab === 'media' ? userMedia.map(p => `<div class="profile-grid-item"><img src="${p.media}" style="width:100%;height:100%;object-fit:cover;" onerror="this.src='https://via.placeholder.com/100'"></div>`).join('') : Object.keys(user.workspace?.files || {}).map(f => `<div class="profile-grid-item" style="aspect-ratio:auto;padding:0.5rem;"><i class="fas fa-file-code"></i> ${f}</div>`).join('')}</div></div>`;
         document.querySelectorAll('.profile-tab').forEach(tab => tab.addEventListener('click', () => { profileTab = tab.dataset.tab; renderProfile(); }));
     }
     window.toggleFollow = function (username) {
@@ -1016,7 +1066,16 @@
 
     function updateSidebar() {
         document.getElementById('sideUsername').innerHTML = `${currentUser.username} ${isAdmin ? '<span class="god-badge"><span class="spin">👑</span> GOD</span>' : ''}`;
-        if (currentUser.workspace.avatar) document.getElementById('sideAvatar').innerHTML = `<img src="${currentUser.workspace.avatar}" style="width:100%;height:100%;object-fit:cover;">`;
+        const avatar = currentUser.workspace?.avatar;
+        const avatarDiv = document.getElementById('sideAvatar');
+        const drawerAvatar = document.getElementById('drawerAvatar');
+        if (avatar) {
+            avatarDiv.innerHTML = `<img src="${avatar}" style="width:100%;height:100%;object-fit:cover;">`;
+            drawerAvatar.innerHTML = `<img src="${avatar}" style="width:100%;height:100%;object-fit:cover;">`;
+        } else {
+            avatarDiv.innerHTML = `<i class="fas fa-user-secret"></i>`;
+            drawerAvatar.innerHTML = `<i class="fas fa-user-secret"></i>`;
+        }
         document.getElementById('drawerUsername').value = currentUser.username;
         document.getElementById('drawerEmail').value = currentUser.email || '';
         document.getElementById('drawerBio').value = currentUser.bio || '';
@@ -1046,7 +1105,16 @@
         const file = e.target.files[0];
         if (file && file.type.includes('image')) {
             const reader = new FileReader();
-            reader.onload = (ev) => { currentUser.workspace.avatar = ev.target.result; updateUser(currentUser); updateSidebar(); showToast('Avatar updated'); };
+            reader.onload = (ev) => {
+                currentUser.workspace.avatar = ev.target.result;
+                updateUser(currentUser);
+                updateSidebar();
+                // Refresh current view to show updated avatar
+                if (currentPage === 'threads') renderThreads();
+                if (currentPage === 'community') renderCommunity();
+                if (viewingProfile) renderProfile();
+                showToast('Avatar updated! (Live to all users)');
+            };
             reader.readAsDataURL(file);
         }
     };
