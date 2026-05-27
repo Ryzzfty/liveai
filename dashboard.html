@@ -16,7 +16,6 @@
             overflow: hidden;
             font-size: clamp(12px, 4vw, 15px);
         }
-        /* BACKGROUND TYPING */
         .bg-terminal {
             position: fixed;
             top: 0;
@@ -219,7 +218,6 @@
             color: #e5eaf5;
         }
         .card-content { flex: 1; padding: 1rem; overflow-y: auto; }
-        /* Chat Panel */
         .chat-messages {
             flex: 1;
             overflow-y: auto;
@@ -366,17 +364,6 @@
             resize: vertical;
             outline: none;
         }
-        .media-input {
-            width: 100%;
-            background: rgba(10, 12, 20, 0.8);
-            border: 1px solid rgba(70,76,100,0.5);
-            border-radius: 12px;
-            padding: 0.6rem;
-            margin-top: 0.5rem;
-            color: #c8d0e5;
-            font-size: 0.75rem;
-            outline: none;
-        }
         .btn-post {
             margin-top: 0.8rem;
             background: #5de4c7;
@@ -487,7 +474,20 @@
 <div class="grid-overlay"></div>
 <div class="scanline"></div>
 
-<div class="app">
+<!-- LOGIN POPUP -->
+<div id="loginOverlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:1000; display:flex; align-items:center; justify-content:center;">
+    <div style="background:#121520; border:1px solid #5de4c7; border-radius:20px; padding:2rem; width:320px; text-align:center;">
+        <i class="fas fa-user-secret" style="font-size:3rem; color:#5de4c7; margin-bottom:1rem;"></i>
+        <h2 style="color:#5de4c7; margin-bottom:1rem;">Enter Username</h2>
+        <input type="text" id="loginUsernameInput" style="width:100%; padding:12px; background:#1a1d2e; border:1px solid #3a3e55; border-radius:25px; color:white; margin-bottom:1rem; text-align:center;" placeholder="e.g., grey, nexus, zero">
+        <button id="loginConfirmBtn" style="background:#5de4c7; border:none; padding:10px 30px; border-radius:25px; cursor:pointer; font-weight:bold;">Join Chat</button>
+        <div style="margin-top:1rem; font-size:0.7rem; color:#8a95aa;">
+            Try: grey, nexus, zero, phantom
+        </div>
+    </div>
+</div>
+
+<div class="app" id="app" style="display:none;">
     <div class="sidebar">
         <div class="profile-card">
             <div class="avatar" id="sideAvatar"><i class="fas fa-user-secret"></i></div>
@@ -495,7 +495,6 @@
             <button class="settings-icon" id="settingsBtn"><i class="fas fa-cog"></i></button>
         </div>
         
-        <!-- ONLINE USERS SECTION -->
         <div class="online-users-section">
             <div class="section-title">
                 <i class="fas fa-users"></i> ONLINE USERS
@@ -508,7 +507,7 @@
         
         <div class="menu">
             <div class="menu-item" data-page="dashboard"><i class="fas fa-tachometer-alt"></i><span>DASHBOARD</span></div>
-            <div class="menu-item" data-page="threads"><i class="fas fa-feather-alt"></i><span>THREADS</span><span id="notifBadge" class="notif-badge" style="display:none;">0</span></div>
+            <div class="menu-item" data-page="threads"><i class="fas fa-feather-alt"></i><span>THREADS</span></div>
             <div class="menu-item" data-page="ranking"><i class="fas fa-trophy"></i><span>RANKING</span></div>
             <div class="menu-item" data-page="editor"><i class="fas fa-code"></i><span>TERMUX EDITOR</span></div>
             <div class="menu-item" data-page="liveview"><i class="fas fa-eye"></i><span>LIVE VIEW</span></div>
@@ -547,41 +546,27 @@
     let currentChannel = null;
     let onlineUsers = new Set();
     let onlineInterval = null;
-    let currentChatUser = null;
     let activeChatPanel = false;
+    let currentPage = 'dashboard';
     
     // ========== INITIAL DATA ==========
-    if (!sessionStorage.getItem('greySession')) {
-        // Create session if not exists (for demo)
-        sessionStorage.setItem('greySession', JSON.stringify({ username: "guest" + Math.floor(Math.random()*1000) }));
-    }
-    
     const ADMIN = "grey";
     let blockedUsers = JSON.parse(localStorage.getItem('grey_blocked') || '[]');
     let globalPosts = JSON.parse(localStorage.getItem('grey_posts') || '[]');
     let users = [];
     let panelFiles = [null, null, null, null];
-    let currentPage = 'dashboard';
     let postType = 'text';
     let liveFormat = 'html';
-    let notifications = [];
     
     function saveUsers() { localStorage.setItem('greyhack_users', JSON.stringify(users)); }
     function saveBlocked() { localStorage.setItem('grey_blocked', JSON.stringify(blockedUsers)); }
     function savePosts() { localStorage.setItem('grey_posts', JSON.stringify(globalPosts)); }
-    function saveNotif() { localStorage.setItem('notifications', JSON.stringify(notifications)); }
     function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
     function escapeHtml(str) { return str?.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])) || ''; }
     
     // Background typing animation
     const bgContainer = document.getElementById('bgContainer');
-    const bgCmds = [
-        "> connecting to secure server...",
-        "> supabase real-time active",
-        "$ online users: click to chat",
-        "> end-to-end encrypted",
-        "$ type /help for commands"
-    ];
+    const bgCmds = ["> connecting to supabase...", "> real-time chat active", "$ click online users to chat", "> end-to-end encrypted"];
     let bgIdx = 0, bgCharIdx = 0, bgIsTyping = true;
     function typeBackground() {
         if (bgIsTyping) {
@@ -589,16 +574,11 @@
                 const currentLine = bgCmds[bgIdx % bgCmds.length].substring(0, bgCharIdx + 1);
                 bgContainer.innerHTML = `<div class="bg-line"><span class="bg-prompt">grey@hack:~$ </span>${currentLine}<span class="bg-cursor"></span></div>`;
                 bgCharIdx++;
-                setTimeout(typeBackground, 40 + Math.random() * 30);
+                setTimeout(typeBackground, 40);
             } else {
                 bgContainer.innerHTML = `<div class="bg-line"><span class="bg-prompt">grey@hack:~$ </span>${bgCmds[bgIdx % bgCmds.length]}</div>`;
                 bgIsTyping = false;
-                setTimeout(() => {
-                    bgIdx++;
-                    bgCharIdx = 0;
-                    bgIsTyping = true;
-                    typeBackground();
-                }, 2000);
+                setTimeout(() => { bgIdx++; bgCharIdx = 0; bgIsTyping = true; typeBackground(); }, 2000);
             }
         }
     }
@@ -608,23 +588,17 @@
     function initSupabase() {
         if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY === "https://kxahdvrxoohkqeecbkrn.supabase.co/rest/v1/") {
             console.warn("Please configure SUPABASE_ANON_KEY");
+            showToast("⚠️ Please configure Supabase anon key in the code!");
             return false;
         }
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         return true;
     }
     
-    // Update online status in localStorage (simple presence)
     function updateOnlineStatus() {
         if (!currentUser) return;
-        const status = {
-            username: currentUser.username,
-            timestamp: Date.now(),
-            avatar: currentUser.workspace?.avatar || null
-        };
+        const status = { username: currentUser.username, timestamp: Date.now(), avatar: currentUser.workspace?.avatar || null };
         localStorage.setItem(`online_${currentUser.username}`, JSON.stringify(status));
-        
-        // Clean old entries
         const now = Date.now();
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
@@ -646,11 +620,7 @@
             if (key && key.startsWith('online_') && !key.includes(currentUser?.username)) {
                 try {
                     const data = JSON.parse(localStorage.getItem(key));
-                    if (now - data.timestamp < 10000) {
-                        online.push({ username: key.replace('online_', ''), avatar: data.avatar });
-                    } else {
-                        localStorage.removeItem(key);
-                    }
+                    if (now - data.timestamp < 10000) online.push({ username: key.replace('online_', ''), avatar: data.avatar });
                 } catch(e) {}
             }
         }
@@ -667,7 +637,7 @@
             return;
         }
         container.innerHTML = online.map(user => `
-            <div class="online-user ${currentChatUser === user.username ? 'active-chat' : ''}" onclick="openChatWith('${user.username}')">
+            <div class="online-user" onclick="openChatPanel()">
                 <span class="online-status"></span>
                 <span style="flex:1;">${user.username} ${user.username === ADMIN ? '👑' : ''}</span>
                 <i class="fas fa-comment" style="font-size:0.6rem;opacity:0.6;"></i>
@@ -678,27 +648,16 @@
     // ========== CHAT FUNCTIONS ==========
     async function loadChatMessages() {
         if (!supabase || !currentUser) return;
-        const { data, error } = await supabase
-            .from('chat_messages')
-            .select('*')
-            .order('created_at', { ascending: true })
-            .limit(200);
-        
+        const { data, error } = await supabase.from('chat_messages').select('*').order('created_at', { ascending: true }).limit(200);
         if (error) {
-            console.error('Error loading messages:', error);
-            if (error.message.includes('relation') || error.code === '42P01') {
-                showToast('⚠️ Table "chat_messages" not found. Please create it in Supabase!');
-            }
+            if (error.message.includes('relation')) showToast('⚠️ Create "chat_messages" table in Supabase!');
             return;
         }
-        
         if (data && data.length > 0) {
             const container = document.getElementById('chatMessages');
             if (container) {
                 container.innerHTML = '';
-                data.forEach(msg => {
-                    addChatMessageToUI(msg.username, msg.message, msg.username === currentUser.username);
-                });
+                data.forEach(msg => addChatMessageToUI(msg.username, msg.message, msg.username === currentUser.username));
             }
         }
     }
@@ -708,65 +667,36 @@
         if (!container) return;
         const div = document.createElement('div');
         div.className = `chat-bubble ${isMine ? 'chat-mine' : 'chat-other'}`;
-        div.innerHTML = `
-            <div style="font-weight:bold; font-size:0.7rem; margin-bottom:3px;">${isMine ? 'You' : username}</div>
-            <div>${escapeHtml(message)}</div>
-            <div class="chat-time">${new Date().toLocaleTimeString()}</div>
-        `;
+        div.innerHTML = `<div style="font-weight:bold; font-size:0.7rem; margin-bottom:3px;">${isMine ? 'You' : username}</div><div>${escapeHtml(message)}</div><div class="chat-time">${new Date().toLocaleTimeString()}</div>`;
         container.appendChild(div);
         container.scrollTop = container.scrollHeight;
     }
     
-    async function sendSupabaseMessage() {
+    async function sendMessage() {
         const input = document.getElementById('chatInput');
         const message = input?.value.trim();
         if (!message || !currentUser || !supabase) return;
-        
-        const { error } = await supabase
-            .from('chat_messages')
-            .insert([{ username: currentUser.username, message: message }]);
-        
-        if (error) {
-            console.error('Error sending:', error);
-            showToast('Failed to send message');
-        } else {
-            input.value = '';
-        }
+        const { error } = await supabase.from('chat_messages').insert([{ username: currentUser.username, message: message }]);
+        if (error) showToast('Failed to send');
+        else input.value = '';
     }
     
-    async function setupRealtimeSubscription() {
+    async function setupRealtime() {
         if (!supabase || !currentUser) return;
-        
-        if (currentChannel) {
-            await supabase.removeChannel(currentChannel);
-        }
-        
+        if (currentChannel) await supabase.removeChannel(currentChannel);
         currentChannel = supabase.channel('public:chat_messages')
-            .on('postgres_changes', { 
-                event: 'INSERT', 
-                schema: 'public', 
-                table: 'chat_messages' 
-            }, (payload) => {
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, (payload) => {
                 const newMsg = payload.new;
                 if (newMsg.username !== currentUser.username && activeChatPanel) {
                     addChatMessageToUI(newMsg.username, newMsg.message, false);
-                    showToast(`New message from ${newMsg.username}`);
                 } else if (newMsg.username !== currentUser.username) {
                     showToast(`📩 New message from ${newMsg.username}`);
                 }
-            })
-            .subscribe();
+            }).subscribe();
     }
     
-    function openChatWith(username) {
-        currentChatUser = username;
+    function openChatPanel() {
         activeChatPanel = true;
-        renderChatPanel();
-        loadChatMessages();
-        setupRealtimeSubscription();
-    }
-    
-    function renderChatPanel() {
         const main = document.getElementById('mainContent');
         main.innerHTML = `
             <div class="card">
@@ -778,112 +708,36 @@
                     <div style="text-align:center;color:#8a95aa;">Loading messages...</div>
                 </div>
                 <div class="chat-input-area">
-                    <input type="text" id="chatInput" class="chat-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendSupabaseMessage()">
-                    <button class="btn-send" onclick="sendSupabaseMessage()">Send</button>
+                    <input type="text" id="chatInput" class="chat-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMessage()">
+                    <button class="btn-send" onclick="sendMessage()">Send</button>
                 </div>
-                <div class="status-bar">✅ Connected to Supabase • Real-time active</div>
+                <div class="status-bar">✅ Connected to Supabase</div>
             </div>
         `;
+        loadChatMessages();
+        setupRealtime();
     }
     
-    function closeChatPanel() {
-        activeChatPanel = false;
-        currentChatUser = null;
-        setPage(currentPage);
+    function closeChatPanel() { activeChatPanel = false; renderDashboard(); }
+    
+    // ========== OTHER FUNCTIONS ==========
+    function renderDashboard() {
+        const filesCount = Object.keys(currentUser.workspace.files).length;
+        const postsCount = globalPosts.length;
+        const likesCount = globalPosts.reduce((s, p) => s + p.likes.length, 0);
+        document.getElementById('mainContent').innerHTML = `<div class="card"><div class="card-header"><i class="fas fa-tachometer-alt"></i> DASHBOARD</div><div class="card-content" style="text-align:center;padding:2rem;"><div style="font-size:1.8rem;color:#5de4c7;">⚡ GreyH4ck Terminal</div><div style="margin:0.8rem 0;font-size:1rem;color:#c8d0e5;">Welcome, ${currentUser.username}${currentUser.username === ADMIN ? ' 👑' : ''}</div><div style="width:60px;height:2px;background:#5de4c7;margin:1rem auto;"></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:2rem;"><div style="background:rgba(30,35,55,0.6);padding:1rem;border-radius:14px;"><i class="fas fa-file-alt"></i><div>FILES</div><div style="font-size:1.5rem;">${filesCount}</div></div><div style="background:rgba(30,35,55,0.6);padding:1rem;border-radius:14px;"><i class="fas fa-feather-alt"></i><div>POSTS</div><div style="font-size:1.5rem;">${postsCount}</div></div><div style="background:rgba(30,35,55,0.6);padding:1rem;border-radius:14px;"><i class="fas fa-heart"></i><div>LIKES</div><div style="font-size:1.5rem;">${likesCount}</div></div></div></div></div>`;
     }
     
-    // ========== USER DATA ==========
-    function loadUsers() {
-        const stored = localStorage.getItem('greyhack_users');
-        if (stored) users = JSON.parse(stored);
-        else {
-            users = [
-                { username: "grey", password: "grey123", email: "god@greyh4ck.com", bio: "👑 THE GOD OF H4CKERS", followers: 301500, following: [], workspace: { files: { "demo.html": { content: "<h1>Hello GreyH4ck!</h1>", type: "html" } }, panelFiles: [null, null, null, null], avatar: null } },
-                { username: "nexus", password: "nexus99", email: "nexus@test.com", bio: "Security Expert 🔒", followers: 1234, following: [], workspace: { files: {}, panelFiles: [null, null, null, null], avatar: null } }
-            ];
-            saveUsers();
-        }
-        const session = sessionStorage.getItem('greySession');
-        if (session) {
-            const { username } = JSON.parse(session);
-            if (blockedUsers.includes(username)) { sessionStorage.removeItem('greySession'); window.location.href = 'login.html'; return; }
-            currentUser = users.find(u => u.username === username);
-            if (!currentUser) {
-                // Create new user
-                currentUser = { username: username, password: "temp", email: username + "@grey.com", bio: "New member", followers: 0, following: [], workspace: { files: {}, panelFiles: [null, null, null, null], avatar: null } };
-                users.push(currentUser);
-                saveUsers();
-            }
-            if (currentUser && !currentUser.workspace) currentUser.workspace = { files: {}, panelFiles: [null, null, null, null], avatar: null };
-            if (currentUser && !currentUser.workspace.files) currentUser.workspace.files = {};
-            if (currentUser && !currentUser.following) currentUser.following = [];
-            if (currentUser && currentUser.followers === undefined) currentUser.followers = 0;
-        }
-    }
-    function updateUser(updated) {
-        const idx = users.findIndex(u => u.username === updated.username);
-        if (idx !== -1) users[idx] = updated;
-        saveUsers();
-        if (currentUser?.username === updated.username) currentUser = updated;
-    }
-    
-    loadUsers();
-    if (!currentUser) {
-        // Create a default user for demo
-        currentUser = { username: "grey", password: "grey123", email: "god@greyh4ck.com", bio: "👑 THE GOD OF H4CKERS", followers: 301500, following: [], workspace: { files: {}, panelFiles: [null, null, null, null], avatar: null } };
-        users.push(currentUser);
-        saveUsers();
-    }
-    const isAdmin = (currentUser.username === ADMIN);
-    if (isAdmin) document.getElementById('adminMenu').style.display = 'flex';
-    if (currentUser.workspace.panelFiles) panelFiles = currentUser.workspace.panelFiles;
-    if (globalPosts.length === 0) {
-        globalPosts = [{ id: 1, username: "grey", type: "text", content: "Welcome to GreyH4ck! 👑", time: new Date().toLocaleString(), likes: [], comments: [] }];
-        savePosts();
-    }
-    
-    // Start online status and Supabase
-    initSupabase();
-    updateOnlineStatus();
-    onlineInterval = setInterval(updateOnlineStatus, 3000);
-    setInterval(renderOnlineUsers, 2000);
-    
-    // ========== FILE FUNCTIONS ==========
-    function renderFileList() {
-        const container = document.getElementById('fileList');
-        if (!container) return;
-        const files = currentUser.workspace.files;
-        container.innerHTML = Object.keys(files).map(name => `<div class="file-item" data-file="${name}"><i class="fas fa-file-code"></i><span>${name}</span><span class="file-del" data-file="${name}"><i class="fas fa-trash"></i></span></div>`).join('');
-        document.querySelectorAll('.file-item').forEach(el => {
-            el.addEventListener('click', (e) => { if (!e.target.classList.contains('file-del')) openFileInPanel(el.dataset.file); });
-            const del = el.querySelector('.file-del');
-            if (del) del.addEventListener('click', (e) => { e.stopPropagation(); const fn = del.dataset.file; if (confirm(`Delete ${fn}?`)) { delete currentUser.workspace.files[fn]; updateUser(currentUser); renderFileList(); renderEditorGrid(); showToast(`Deleted ${fn}`); } });
-        });
-    }
-    function openFileInPanel(filename) { const empty = panelFiles.findIndex(f => f === null); if (empty === -1) { showToast("All panels full!"); return; } panelFiles[empty] = filename; savePanel(); renderEditorGrid(); }
-    function savePanel() { currentUser.workspace.panelFiles = [...panelFiles]; updateUser(currentUser); }
-    function updateFileContent(filename, content) { if (currentUser.workspace.files[filename]) { currentUser.workspace.files[filename].content = content; updateUser(currentUser); } }
-    function createNewFile() { let name = prompt("File name:", "newfile.html"); if (!name) return; if (currentUser.workspace.files[name]) { alert("Exists!"); return; } currentUser.workspace.files[name] = { content: "# New file", type: "txt" }; updateUser(currentUser); renderFileList(); openFileInPanel(name); }
-    
-    function renderEditorGrid() {
+    function renderThreads() {
         const main = document.getElementById('mainContent');
-        main.innerHTML = `<div class="card"><div class="card-header"><i class="fas fa-code"></i> TERMUX EDITOR</div><div class="card-content"><div class="editor-grid">${[0,1,2,3].map(idx => `<div class="editor-panel"><div class="editor-header"><span class="title">${panelFiles[idx] || 'empty'}</span><button class="close-panel" data-panel="${idx}" style="background:none;border:none;color:#ff8888;cursor:pointer;"><i class="fas fa-times"></i></button></div>${panelFiles[idx] ? `<textarea id="panel_${idx}" class="editor-textarea" data-file="${panelFiles[idx]}">${escapeHtml(currentUser.workspace.files[panelFiles[idx]]?.content || '')}</textarea>` : `<div class="empty-panel" onclick="window.promptSelectFile()">+ Select File</div>`}</div>`).join('')}</div></div></div><div class="status-bar">TERMUX • 4 panels</div>`;
-        for (let i = 0; i < 4; i++) { if (panelFiles[i]) { const ta = document.getElementById(`panel_${i}`); if (ta) ta.addEventListener('blur', function () { updateFileContent(this.dataset.file, this.value); }); } }
-        document.querySelectorAll('.close-panel').forEach(btn => btn.addEventListener('click', (e) => { const i = parseInt(btn.dataset.panel); panelFiles[i] = null; savePanel(); renderEditorGrid(); }));
-    }
-    window.promptSelectFile = function () { const files = Object.keys(currentUser.workspace.files); if (files.length === 0) { showToast("No files"); return; } const selected = prompt(`Files:\n${files.join('\n')}\n\nEnter filename:`); if (selected && currentUser.workspace.files[selected]) openFileInPanel(selected); };
-    
-    function renderLiveView() {
-        const preview = (() => { for (let f of panelFiles) if (f) return currentUser.workspace.files[f]?.content; return null; })();
-        const main = document.getElementById('mainContent');
-        main.innerHTML = `<div class="card"><div class="card-header"><i class="fas fa-eye"></i> LIVE VIEW — ${liveFormat.toUpperCase()} <div style="display:inline-flex;gap:0.5rem;margin-left:1rem;">${['html', 'python', 'text'].map(f => `<button class="type-btn ${liveFormat === f ? 'active' : ''}" data-format="${f}">${f.toUpperCase()}</button>`).join('')}</div></div><div class="card-content">${liveFormat === 'html' ? `<iframe srcdoc="${escapeHtml(preview || '')}" style="width:100%;height:100%;background:white;border-radius:8px;"></iframe>` : `<pre style="color:#c8d0e5;">${escapeHtml(preview || 'No file')}</pre>`}</div></div>`;
-        document.querySelectorAll('[data-format]').forEach(btn => btn.addEventListener('click', () => { liveFormat = btn.dataset.format; renderLiveView(); }));
+        main.innerHTML = `<div class="card"><div class="card-header"><i class="fas fa-feather-alt"></i> THREADS</div><div class="card-content"><div class="new-post"><div class="post-type">${['text', 'image', 'gif'].map(t => `<button class="type-btn ${postType === t ? 'active' : ''}" data-type="${t}">${t.toUpperCase()}</button>`).join('')}</div><textarea id="newPostContent" class="post-input" rows="2" placeholder="Share something..."></textarea><div id="mediaContainer" style="display:${postType !== 'text' ? 'block' : 'none'}"><input id="mediaUrlInput" class="media-input" placeholder="Enter URL..."></div><button class="btn-post" onclick="window.postThread()">POST</button></div>${globalPosts.map(p => `<div class="post"><div class="post-header" onclick="window.openProfile('${p.username}')"><div class="post-avatar"><i class="fas fa-user-secret"></i></div><div><div class="post-username">${p.username} ${p.username === ADMIN ? '👑' : ''}</div><div class="post-time">${p.time}</div></div></div><div class="post-content">${escapeHtml(p.content)}</div><div class="post-actions"><span class="post-like ${p.likes.includes(currentUser.username) ? 'liked' : ''}" onclick="window.likePost(${p.id})"><i class="fas fa-heart"></i> ${p.likes.length}</span><span class="post-comment" onclick="window.commentPost(${p.id})"><i class="fas fa-comment"></i> ${p.comments?.length || 0}</span></div></div>`).join('')}</div></div>`;
+        document.querySelectorAll('[data-type]').forEach(btn => btn.addEventListener('click', () => { postType = btn.dataset.type; document.querySelectorAll('[data-type]').forEach(b => b.classList.remove('active')); btn.classList.add('active'); document.getElementById('mediaContainer').style.display = postType !== 'text' ? 'block' : 'none'; }));
     }
     
     function postThread() {
         const content = document.getElementById('newPostContent')?.value.trim();
         if (!content) { showToast("Cannot post empty!"); return; }
-        globalPosts.unshift({ id: Date.now(), username: currentUser.username, type: postType, content: content, time: new Date().toLocaleString(), likes: [], comments: [], media: null });
+        globalPosts.unshift({ id: Date.now(), username: currentUser.username, type: postType, content: content, time: new Date().toLocaleString(), likes: [], comments: [] });
         savePosts();
         document.getElementById('newPostContent').value = '';
         renderThreads();
@@ -891,11 +745,6 @@
     }
     function likePost(id) { const post = globalPosts.find(p => p.id === id); if (post) { if (post.likes.includes(currentUser.username)) post.likes = post.likes.filter(u => u !== currentUser.username); else post.likes.push(currentUser.username); savePosts(); renderThreads(); } }
     function commentPost(id) { const comment = prompt("Write comment:"); if (!comment) return; const post = globalPosts.find(p => p.id === id); if (post) { post.comments.push({ user: currentUser.username, text: comment, time: new Date().toLocaleTimeString() }); savePosts(); renderThreads(); } }
-    function renderThreads() {
-        const main = document.getElementById('mainContent');
-        main.innerHTML = `<div class="card"><div class="card-header"><i class="fas fa-feather-alt"></i> THREADS</div><div class="card-content"><div class="new-post"><div class="post-type">${['text', 'image', 'gif'].map(t => `<button class="type-btn ${postType === t ? 'active' : ''}" data-type="${t}">${t.toUpperCase()}</button>`).join('')}</div><textarea id="newPostContent" class="post-input" rows="2" placeholder="Share something..."></textarea><div id="mediaContainer" style="display:${postType !== 'text' ? 'block' : 'none'}"><input id="mediaUrlInput" class="media-input" placeholder="Enter URL..."></div><button class="btn-post" onclick="window.postThread()">POST</button></div>${globalPosts.map(p => `<div class="post"><div class="post-header" onclick="window.openProfile('${p.username}')"><div class="post-avatar"><i class="fas fa-user-secret"></i></div><div><div class="post-username">${p.username} ${p.username === ADMIN ? '👑' : ''}</div><div class="post-time">${p.time}</div></div></div><div class="post-content">${escapeHtml(p.content)}</div><div class="post-actions"><span class="post-like ${p.likes.includes(currentUser.username) ? 'liked' : ''}" onclick="window.likePost(${p.id})"><i class="fas fa-heart"></i> ${p.likes.length}</span><span class="post-comment" onclick="window.commentPost(${p.id})"><i class="fas fa-comment"></i> ${p.comments?.length || 0}</span></div></div>`).join('')}</div></div>`;
-        document.querySelectorAll('[data-type]').forEach(btn => btn.addEventListener('click', () => { postType = btn.dataset.type; document.querySelectorAll('[data-type]').forEach(b => b.classList.remove('active')); btn.classList.add('active'); document.getElementById('mediaContainer').style.display = postType !== 'text' ? 'block' : 'none'; }));
-    }
     
     function renderRanking() {
         const scores = users.map(u => {
@@ -907,20 +756,10 @@
         main.innerHTML = `<div class="card"><div class="card-header"><i class="fas fa-trophy"></i> LEADERBOARD</div><div class="card-content">${scores.map((u, i) => `<div class="rank-item"><div class="rank-num">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</div><div><div class="rank-name" onclick="window.openProfile('${u.username}')">${u.username} ${u.username === ADMIN ? '<span class="spin">👑</span> GOD' : ''}</div><div class="rank-stats">${u.posts} posts • ${u.likes} likes • ${u.followers || 0} followers</div></div><div class="rank-score">${u.score} pts</div></div>`).join('')}</div></div>`;
     }
     
-    function openProfile(username) { 
+    function openProfile(username) {
         const user = users.find(u => u.username === username);
         if (!user) { showToast("User not found"); return; }
-        const displayFollowers = (username === ADMIN) ? "301.5K" : (user.followers || 0).toLocaleString();
-        alert(`👤 ${username}\n📧 ${user.email}\n📝 ${user.bio || 'No bio'}\n👥 Followers: ${displayFollowers}\n📊 Posts: ${globalPosts.filter(p => p.username === username).length}`);
-    }
-    
-    function renderDashboard() {
-        const hour = new Date().getHours();
-        const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-        const filesCount = Object.keys(currentUser.workspace.files).length;
-        const postsCount = globalPosts.length;
-        const likesCount = globalPosts.reduce((s, p) => s + p.likes.length, 0);
-        document.getElementById('mainContent').innerHTML = `<div class="card"><div class="card-header"><i class="fas fa-tachometer-alt"></i> DASHBOARD</div><div class="card-content" style="text-align:center;padding:2rem;"><div style="font-size:1.8rem;color:#5de4c7;">⚡ GreyH4ck Terminal</div><div style="margin:0.8rem 0;font-size:1rem;color:#c8d0e5;">${greeting}, ${currentUser.username}${isAdmin ? ' 👑' : ''}</div><div style="width:60px;height:2px;background:#5de4c7;margin:1rem auto;"></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:2rem;"><div style="background:rgba(30,35,55,0.6);padding:1rem;border-radius:14px;"><i class="fas fa-file-alt"></i><div>FILES</div><div style="font-size:1.5rem;">${filesCount}</div></div><div style="background:rgba(30,35,55,0.6);padding:1rem;border-radius:14px;"><i class="fas fa-feather-alt"></i><div>POSTS</div><div style="font-size:1.5rem;">${postsCount}</div></div><div style="background:rgba(30,35,55,0.6);padding:1rem;border-radius:14px;"><i class="fas fa-heart"></i><div>LIKES</div><div style="font-size:1.5rem;">${likesCount}</div></div></div></div></div>`;
+        alert(`👤 ${username}\n📧 ${user.email}\n📝 ${user.bio || 'No bio'}\n👥 Followers: ${user.followers}\n📊 Posts: ${globalPosts.filter(p => p.username === username).length}`);
     }
     
     function renderAdmin() {
@@ -929,6 +768,68 @@
     }
     window.blockUser = (u) => { if (!blockedUsers.includes(u)) { blockedUsers.push(u); saveBlocked(); renderAdmin(); showToast(`Blocked ${u}`); } };
     window.unblockUser = (u) => { blockedUsers = blockedUsers.filter(b => b !== u); saveBlocked(); renderAdmin(); showToast(`Unblocked ${u}`); };
+    
+    function renderEditorGrid() {
+        const main = document.getElementById('mainContent');
+        main.innerHTML = `<div class="card"><div class="card-header"><i class="fas fa-code"></i> TERMUX EDITOR</div><div class="card-content"><div class="editor-grid">${[0,1,2,3].map(idx => `<div class="editor-panel"><div class="editor-header"><span class="title">${panelFiles[idx] || 'empty'}</span><button class="close-panel" data-panel="${idx}" style="background:none;border:none;color:#ff8888;cursor:pointer;"><i class="fas fa-times"></i></button></div>${panelFiles[idx] ? `<textarea id="panel_${idx}" class="editor-textarea" data-file="${panelFiles[idx]}">${escapeHtml(currentUser.workspace.files[panelFiles[idx]]?.content || '')}</textarea>` : `<div class="empty-panel" onclick="window.promptSelectFile()">+ Select File</div>`}</div>`).join('')}</div></div></div><div class="status-bar">TERMUX • 4 panels</div>`;
+        for (let i = 0; i < 4; i++) { if (panelFiles[i]) { const ta = document.getElementById(`panel_${i}`); if (ta) ta.addEventListener('blur', function () { if (currentUser.workspace.files[this.dataset.file]) { currentUser.workspace.files[this.dataset.file].content = this.value; updateUser(currentUser); } }); } }
+        document.querySelectorAll('.close-panel').forEach(btn => btn.addEventListener('click', (e) => { const i = parseInt(btn.dataset.panel); panelFiles[i] = null; savePanel(); renderEditorGrid(); }));
+    }
+    window.promptSelectFile = function () { const files = Object.keys(currentUser.workspace.files); if (files.length === 0) { showToast("No files"); return; } const selected = prompt(`Files:\n${files.join('\n')}\n\nEnter filename:`); if (selected && currentUser.workspace.files[selected]) openFileInPanel(selected); };
+    function openFileInPanel(filename) { const empty = panelFiles.findIndex(f => f === null); if (empty === -1) { showToast("All panels full!"); return; } panelFiles[empty] = filename; savePanel(); renderEditorGrid(); }
+    function savePanel() { currentUser.workspace.panelFiles = [...panelFiles]; updateUser(currentUser); }
+    function createNewFile() { let name = prompt("File name:", "newfile.html"); if (!name) return; if (currentUser.workspace.files[name]) { alert("Exists!"); return; } currentUser.workspace.files[name] = { content: "# New file", type: "txt" }; updateUser(currentUser); renderFileList(); openFileInPanel(name); }
+    
+    function renderLiveView() {
+        const preview = (() => { for (let f of panelFiles) if (f) return currentUser.workspace.files[f]?.content; return null; })();
+        const main = document.getElementById('mainContent');
+        main.innerHTML = `<div class="card"><div class="card-header"><i class="fas fa-eye"></i> LIVE VIEW — ${liveFormat.toUpperCase()} <div style="display:inline-flex;gap:0.5rem;margin-left:1rem;">${['html', 'python', 'text'].map(f => `<button class="type-btn ${liveFormat === f ? 'active' : ''}" data-format="${f}">${f.toUpperCase()}</button>`).join('')}</div></div><div class="card-content">${liveFormat === 'html' ? `<iframe srcdoc="${escapeHtml(preview || '')}" style="width:100%;height:100%;background:white;border-radius:8px;"></iframe>` : `<pre style="color:#c8d0e5;">${escapeHtml(preview || 'No file')}</pre>`}</div></div>`;
+        document.querySelectorAll('[data-format]').forEach(btn => btn.addEventListener('click', () => { liveFormat = btn.dataset.format; renderLiveView(); }));
+    }
+    
+    function renderFileList() {
+        const container = document.getElementById('fileList');
+        if (!container) return;
+        const files = currentUser.workspace.files;
+        container.innerHTML = Object.keys(files).map(name => `<div class="file-item" data-file="${name}"><i class="fas fa-file-code"></i><span>${name}</span><span class="file-del" data-file="${name}"><i class="fas fa-trash"></i></span></div>`).join('');
+        document.querySelectorAll('.file-item').forEach(el => {
+            el.addEventListener('click', (e) => { if (!e.target.classList.contains('file-del')) openFileInPanel(el.dataset.file); });
+            const del = el.querySelector('.file-del');
+            if (del) del.addEventListener('click', (e) => { e.stopPropagation(); const fn = del.dataset.file; if (confirm(`Delete ${fn}?`)) { delete currentUser.workspace.files[fn]; updateUser(currentUser); renderFileList(); renderEditorGrid(); showToast(`Deleted ${fn}`); } });
+        });
+    }
+    
+    // ========== USER MANAGEMENT ==========
+    function loadUsers() {
+        const stored = localStorage.getItem('greyhack_users');
+        if (stored) users = JSON.parse(stored);
+        else {
+            users = [
+                { username: "grey", password: "grey123", email: "god@greyh4ck.com", bio: "👑 THE GOD OF H4CKERS", followers: 301500, following: [], workspace: { files: { "demo.html": { content: "<h1>Hello GreyH4ck!</h1>", type: "html" } }, panelFiles: [null, null, null, null], avatar: null } },
+                { username: "nexus", password: "nexus99", email: "nexus@test.com", bio: "Security Expert 🔒", followers: 1234, following: [], workspace: { files: {}, panelFiles: [null, null, null, null], avatar: null } }
+            ];
+            saveUsers();
+        }
+    }
+    
+    function updateUser(updated) {
+        const idx = users.findIndex(u => u.username === updated.username);
+        if (idx !== -1) users[idx] = updated;
+        saveUsers();
+        if (currentUser?.username === updated.username) currentUser = updated;
+    }
+    
+    function updateSidebar() {
+        document.getElementById('sideUsername').innerHTML = `${currentUser.username} ${currentUser.username === ADMIN ? '<span class="god-badge"><span class="spin">👑</span> GOD</span>' : ''}`;
+        const avatar = currentUser.workspace?.avatar;
+        if (avatar) {
+            document.getElementById('sideAvatar').innerHTML = `<img src="${avatar}" style="width:100%;height:100%;object-fit:cover;">`;
+            document.getElementById('drawerAvatar').innerHTML = `<img src="${avatar}" style="width:100%;height:100%;object-fit:cover;">`;
+        }
+        document.getElementById('drawerUsername').value = currentUser.username;
+        document.getElementById('drawerEmail').value = currentUser.email || '';
+        document.getElementById('drawerBio').value = currentUser.bio || '';
+    }
     
     function setPage(page) {
         currentPage = page;
@@ -942,21 +843,53 @@
         document.querySelectorAll('.menu-item').forEach(m => { if (m.dataset.page === page) m.classList.add('active'); else m.classList.remove('active'); });
     }
     
-    function updateSidebar() {
-        document.getElementById('sideUsername').innerHTML = `${currentUser.username} ${isAdmin ? '<span class="god-badge"><span class="spin">👑</span> GOD</span>' : ''}`;
-        const avatar = currentUser.workspace?.avatar;
-        if (avatar) {
-            document.getElementById('sideAvatar').innerHTML = `<img src="${avatar}" style="width:100%;height:100%;object-fit:cover;">`;
-            document.getElementById('drawerAvatar').innerHTML = `<img src="${avatar}" style="width:100%;height:100%;object-fit:cover;">`;
+    // ========== LOGIN ==========
+    function login(username) {
+        loadUsers();
+        let user = users.find(u => u.username === username);
+        if (!user) {
+            user = { username: username, password: "temp", email: username + "@grey.com", bio: "New member", followers: 0, following: [], workspace: { files: {}, panelFiles: [null, null, null, null], avatar: null } };
+            users.push(user);
+            saveUsers();
         }
-        document.getElementById('drawerUsername').value = currentUser.username;
-        document.getElementById('drawerEmail').value = currentUser.email || '';
-        document.getElementById('drawerBio').value = currentUser.bio || '';
+        currentUser = user;
+        if (currentUser.workspace.panelFiles) panelFiles = currentUser.workspace.panelFiles;
+        
+        initSupabase();
+        updateOnlineStatus();
+        onlineInterval = setInterval(updateOnlineStatus, 3000);
+        setInterval(renderOnlineUsers, 2000);
+        setupRealtime();
+        
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('app').style.display = 'flex';
+        updateSidebar();
+        renderFileList();
+        setPage('dashboard');
     }
     
-    // Event listeners
-    document.querySelectorAll('.menu-item').forEach(m => m.addEventListener('click', () => setPage(m.dataset.page)));
-    document.getElementById('newFileBtn').onclick = () => createNewFile();
+    document.getElementById('loginConfirmBtn').onclick = () => {
+        const username = document.getElementById('loginUsernameInput').value.trim();
+        if (username) login(username);
+        else alert("Please enter a username");
+    };
+    document.getElementById('loginUsernameInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const username = e.target.value.trim();
+            if (username) login(username);
+        }
+    });
+    
+    // Global functions
+    window.openProfile = openProfile;
+    window.postThread = postThread;
+    window.likePost = likePost;
+    window.commentPost = commentPost;
+    window.openChatPanel = openChatPanel;
+    window.sendMessage = sendMessage;
+    window.closeChatPanel = closeChatPanel;
+    
+    // Settings drawer
     const drawer = document.getElementById('drawer');
     document.getElementById('settingsBtn').onclick = () => drawer.classList.add('open');
     document.getElementById('editIcon').onclick = () => drawer.classList.add('open');
@@ -967,12 +900,15 @@
         currentUser.email = document.getElementById('drawerEmail').value;
         currentUser.bio = document.getElementById('drawerBio').value;
         updateUser(currentUser);
-        sessionStorage.setItem('greySession', JSON.stringify({ username: currentUser.username }));
         updateSidebar();
         drawer.classList.remove('open');
         showToast('Profile saved');
     };
-    document.getElementById('logoutBtn').onclick = () => { sessionStorage.removeItem('greySession'); window.location.href = 'login.html'; };
+    document.getElementById('logoutBtn').onclick = () => { 
+        localStorage.removeItem(`online_${currentUser.username}`);
+        sessionStorage.clear();
+        window.location.reload();
+    };
     document.getElementById('uploadAvatarBtn').onclick = () => document.getElementById('avatarInput').click();
     document.getElementById('avatarInput').onchange = (e) => {
         const file = e.target.files[0];
@@ -982,24 +918,7 @@
             reader.readAsDataURL(file);
         }
     };
-    
-    // Expose global functions
-    window.openProfile = openProfile;
-    window.postThread = postThread;
-    window.likePost = likePost;
-    window.commentPost = commentPost;
-    window.openChatWith = openChatWith;
-    window.sendSupabaseMessage = sendSupabaseMessage;
-    window.closeChatPanel = closeChatPanel;
-    
-    updateSidebar();
-    renderFileList();
-    setPage('dashboard');
-    
-    // Initial presence
-    if (initSupabase()) {
-        setupRealtimeSubscription();
-    }
+    document.getElementById('newFileBtn').onclick = () => createNewFile();
 </script>
 </body>
 </html>
